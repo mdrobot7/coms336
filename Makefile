@@ -1,0 +1,45 @@
+TARGET_EXE := render.exe
+BUILD_DIR := ./build
+SRC_DIR := ./src
+
+CC := g++
+COMMON_FLAGS := -O0 -g
+CFLAGS := -Wall -Wextra
+CPPFLAGS := -MMD -MP
+LDFLAGS := --gc-sections
+
+SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this
+OBJS := $(SOURCES:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d) # Generate sub-makefiles for each C source
+
+# Turn LDFLAGS into -Wl,[flag],[flag]... to pass to GCC
+space := $() $()
+comma := ,
+LDFLAGS := -Wl,$(subst $(space),$(comma),$(LDFLAGS))
+
+all: $(BUILD_DIR)/$(TARGET_EXE) compiledb
+
+# Link C sources into final executable
+$(BUILD_DIR)/$(TARGET_EXE): $(OBJS)
+	$(CC) $(COMMON_FLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+# Build C sources
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CC) $(COMMON_FLAGS) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# Build ASM sources
+$(BUILD_DIR)/%.s.o: %.s
+	mkdir -p $(dir $@)
+	$(CC) $(COMMON_FLAGS) $(CPPFLAGS) $(DFU_CPPFLAGS) $(CFLAGS) -x assembler-with-cpp -c $< -o $@
+
+# Generate ./build/compile_commands.json using compiledb
+compiledb:
+	mkdir -p $(BUILD_DIR)
+	compiledb -n -o $(BUILD_DIR)/compile_commands.json make
+
+clean:
+	rm -r $(BUILD_DIR)
+
+.PHONY: all compiledb clean
+-include $(DEPS)
