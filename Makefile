@@ -5,10 +5,12 @@ LIB_DIR := ./lib
 
 NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
 
+TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
+
 CC := g++
 COMMON_FLAGS := -O0 -g
 CFLAGS := -Wall -Wextra
-CPPFLAGS := -MMD -MP -I$(NLOHMANN_JSON_PATH)
+CPPFLAGS := -MMD -MP -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH)
 LDFLAGS := --gc-sections
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this
