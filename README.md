@@ -8,6 +8,11 @@ make all
 ./build/render.exe
 ```
 
+## Third Party Libraries (/lib)
+- nlohmann's JSON parsing library
+- TinyOBJLoader
+  - RapidOBJ is a newer, faster version of TinyOBJLoader but it doesn't support the Windows/MSYS combo. It's not Windows or Linux so it doesn't know what to do
+
 
 ## Tasks
 - [ ] A camera with configurable position, orientation, and field of view
