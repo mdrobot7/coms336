@@ -1,11 +1,14 @@
 TARGET_EXE := render.exe
 BUILD_DIR := ./build
 SRC_DIR := ./src
+LIB_DIR := ./lib
+
+NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
 
 CC := g++
 COMMON_FLAGS := -O0 -g
 CFLAGS := -Wall -Wextra
-CPPFLAGS := -MMD -MP
+CPPFLAGS := -MMD -MP -I$(NLOHMANN_JSON_PATH)
 LDFLAGS := --gc-sections
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this
