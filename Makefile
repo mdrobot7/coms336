@@ -39,7 +39,7 @@ $(BUILD_DIR)/%.s.o: %.s
 	$(CC) $(COMMON_FLAGS) $(CPPFLAGS) $(DFU_CPPFLAGS) $(CFLAGS) -x assembler-with-cpp -c $< -o $@
 
 # Generate ./build/compile_commands.json using compiledb
-compiledb:
+compiledb: $(BUILD_DIR)/$(TARGET_EXE)
 	mkdir -p $(BUILD_DIR)
 	compiledb -n -o $(BUILD_DIR)/compile_commands.json make
 
