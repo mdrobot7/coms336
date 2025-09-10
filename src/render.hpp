@@ -2,11 +2,14 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+#include "scene.hpp"
+#include "ray.hpp"
 
 class Render
 {
 public:
-    Render(int width, int height, int jobs);
+    Render(Scene &scene, int width, int height, int jobs);
     ~Render();
 
     /**
@@ -27,10 +30,18 @@ public:
     int save(std::string filename);
 
 private:
+    Scene &mScene;
+
     int mWidth, mHeight;
     uint8_t *mFb;
 
     int mJobs;
 
+    std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
+    vector_t mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Origin is top left corner
+
     uint8_t *getPixel(int y, int x);
+
+    void setupImgPlane();
+    vector_t getImgPlanePixel(int y, int x);
 };
