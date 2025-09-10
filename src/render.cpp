@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
+#include <chrono>
 #include "render.hpp"
 #include "matrix.hpp"
 
@@ -12,7 +14,7 @@
 #define G (1)
 #define B (2)
 
-Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs) : mScene(scene)
+Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs) : mScene(scene)
 {
     mWidth = width;
     mHeight = height;
@@ -24,6 +26,8 @@ Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int j
     }
 
     mJobs = jobs;
+    mNextPixelX = mNextPixelY = 0;
+    mKillThreads = false;
 
     setupImgPlane();
 }
@@ -53,7 +57,54 @@ int Render::run()
         }
     }
     std::cout << "Created " << mRays.size() * mRays[0].size() * mRays[0][0].size() << " rays." << std::endl;
+
+    // Create a pool of threads to dispatch jobs to.
+    // A job is just a pixel, really. Could even do it
+    // by each ray. It doesn't matter what order the pixels
+    // are rendered in, just that the final value is
+    // written to the framebuffer.
     std::cout << "Starting render with " << mJobs << " threads..." << std::endl;
+    for (int i = 0; i < mJobs; i++)
+    {
+        mThreads.emplace_back(std::thread(&Render::renderPixel, this));
+    }
+
+    std::cout << "Started threads. Rendering..." << std::endl;
+    while (true)
+    {
+        mNextPixelLock.lock();
+        int nextX = mNextPixelX;
+        int nextY = mNextPixelY;
+        mNextPixelLock.unlock();
+
+        // Lovely progress bar
+        const int barWidth = 70;
+        const int progress = (((double)nextY * mWidth + nextX) / (mWidth * mHeight));
+        std::cout << "[";
+        int pos = barWidth * progress;
+        for (int i = 0; i < barWidth; ++i)
+        {
+            if (i < pos)
+                std::cout << "=";
+            else if (i == pos)
+                std::cout << ">";
+            else
+                std::cout << " ";
+        }
+        std::cout << "] " << int(progress * 100.0) << " %\r";
+        std::cout.flush();
+
+        if (progress == 1)
+        {
+            for (int i = 0; i < mJobs; i++)
+            {
+                mThreads[i].join();
+            }
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    std::cout << std::endl;
 
     return 0;
 }
@@ -85,6 +136,47 @@ int Render::save(std::string filename)
     }
     out.close();
     return 0;
+}
+
+void Render::renderPixel()
+{
+    std::vector<Ray> rays;
+    while (!mKillThreads)
+    {
+        mNextPixelLock.lock();
+        int nextX = mNextPixelX;
+        int nextY = mNextPixelY;
+        if (nextY >= mHeight)
+        {
+            mNextPixelLock.unlock();
+            break;
+        }
+        else
+        {
+            mNextPixelX = (mNextPixelX + 1) % mWidth;
+            if (mNextPixelX == 0 && mNextPixelY < mHeight)
+            {
+                mNextPixelY++;
+            }
+        }
+        mNextPixelLock.unlock();
+
+        mRaysLock.lock();
+        rays = mRays[nextY][nextX];
+        mRaysLock.unlock();
+
+        for (Ray r : rays)
+        {
+            // Trace the ray
+        }
+
+        mFbLock.lock();
+        uint8_t *pixel = getPixel(nextY, nextX);
+        pixel[R] = 255;
+        pixel[G] = 128;
+        pixel[B] = 0;
+        mFbLock.unlock();
+    }
 }
 
 uint8_t *Render::getPixel(int y, int x)

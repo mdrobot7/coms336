@@ -3,13 +3,15 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <thread>
+#include <mutex>
 #include "scene.hpp"
 #include "ray.hpp"
 
 class Render
 {
 public:
-    Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs);
+    Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs);
     ~Render();
 
     /**
@@ -30,15 +32,28 @@ public:
     int save(std::string filename);
 
 private:
-    Scene &mScene;
+    const Scene &mScene;
 
     int mWidth, mHeight, mAntiAliasingLevel;
     uint8_t *mFb;
+    std::mutex mFbLock;
 
     int mJobs;
+    std::vector<std::thread> mThreads;
+    int mNextPixelX, mNextPixelY;
+    std::mutex mNextPixelLock;
+    bool mKillThreads;
 
     std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
+    std::mutex mRaysLock;
     vector_t mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Origin is top left corner
+
+    /**
+     * @brief Job for an individual thread in the thread
+     * pool. Renders the next pixel in the queue and puts
+     * the result in the framebuffer.
+     */
+    void renderPixel();
 
     /**
      * @brief Get a pointer to the pixel in the framebuffer
