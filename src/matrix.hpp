@@ -1,12 +1,19 @@
 #pragma once
 #include <vector>
 
-typedef std::vector<std::vector<double>> matrix;
-typedef std::vector<double> vector;
+typedef std::vector<std::vector<double>> matrix_t;
+typedef std::vector<double> vector_t;
 
 class Matrix
 {
 public:
+    /**
+     * NOTE!
+     * All functions in this class return *new* std::vectors. The
+     * original vectors are left unmodified. Make sure to take care
+     * of any memory issues.
+     */
+
     /**
      * @brief n-dimensional dot product of two vectors
      */
@@ -51,4 +58,9 @@ public:
      * @brief n-dimensional matrix multiply with a scalar
      */
     static std::vector<std::vector<double>> mscale(std::vector<std::vector<double>> a, double scalar);
+
+    /**
+     * @brief m*n matrix transpose
+     */
+    std::vector<std::vector<double>> transpose(std::vector<std::vector<double>> a);
 };

@@ -128,3 +128,18 @@ std::vector<std::vector<double>> Matrix::mscale(std::vector<std::vector<double>>
     }
     return ret;
 }
+
+std::vector<std::vector<double>> Matrix::transpose(std::vector<std::vector<double>> a)
+{
+    std::vector<std::vector<double>> ret(a[0].size());
+
+    for (size_t i = 0; i < a[0].size(); i++)
+    {
+        ret[i] = std::vector<double>(a[0].size());
+        for (size_t j = 0; j < a.size(); j++)
+        {
+            ret[i][j] = a[j][i];
+        }
+    }
+    return ret;
+}
