@@ -4,6 +4,10 @@
 typedef std::vector<std::vector<double>> matrix_t;
 typedef std::vector<double> vector_t;
 
+#define V_X (0)
+#define V_Y (1)
+#define V_Z (2)
+
 class Matrix
 {
 public:
@@ -38,6 +42,11 @@ public:
      * @brief n-dimensional vector multiply with a scalar
      */
     static std::vector<double> vscale(std::vector<double> a, double scalar);
+
+    /**
+     * @brief n-dimensional vector norm
+     */
+    static std::vector<double> vnorm(std::vector<double> a);
 
     /**
      * @brief m*n matrix add

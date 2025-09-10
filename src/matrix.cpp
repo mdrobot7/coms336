@@ -1,6 +1,7 @@
 #include "matrix.hpp"
 #include <vector>
 #include <stdexcept>
+#include <cmath>
 
 double Matrix::dot(std::vector<double> a, std::vector<double> b)
 {
@@ -60,6 +61,20 @@ std::vector<double> Matrix::vscale(std::vector<double> a, double scalar)
         ret[i] = a[i] * scalar;
     }
     return ret;
+}
+
+std::vector<double> Matrix::vnorm(std::vector<double> a)
+{
+    std::vector<double> ret(a.size());
+
+    double mag = 0.0;
+    for (double i : a)
+    {
+        mag += i * i;
+    }
+    mag = sqrt(mag);
+
+    return vscale(a, 1.0 / mag);
 }
 
 std::vector<std::vector<double>> Matrix::madd(std::vector<std::vector<double>> a, std::vector<std::vector<double>> b)
