@@ -2,17 +2,30 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+#include "nlohmann/json.hpp"
 #include "tiny_obj_loader.h"
 #include "matrix.hpp"
 #include "ray.hpp"
 
 typedef std::vector<uint8_t> color_t;
 
+static inline color_t intToColor(int i)
+{
+    return color_t{(uint8_t)((i & 0xFF0000) >> 16), (uint8_t)((i & 0xFF00) >> 8), (uint8_t)(i & 0xFF)};
+}
+
+static inline int colorToInt(color_t c)
+{
+    return (c[0] << 16) | (c[1] << 8) | c[2];
+}
+
 namespace object
 {
     class Primitive
     {
     public:
+        Primitive();
+        Primitive(nlohmann::json json);
         static Ray collide(Ray incoming);
     };
 
@@ -30,6 +43,7 @@ namespace object
         color_t mColor;
 
         Triangle(vector_t v0, vector_t v1, vector_t v2, bool spectral, color_t color);
+        Triangle(nlohmann::json json);
 
         static Ray collide(Ray incoming);
     };
@@ -48,6 +62,7 @@ namespace object
         color_t mColor;
 
         Sphere(vector_t center, double radius, bool spectral, color_t color);
+        Sphere(nlohmann::json json);
 
         static Ray collide(Ray incoming);
     };
@@ -59,6 +74,7 @@ namespace object
         color_t mColor;
 
         Light(vector_t center, color_t color);
+        Light(nlohmann::json json);
 
         static Ray collide(Ray incoming);
     };
@@ -70,29 +86,35 @@ namespace object
         vector_t mDir;
         double mFocalLength;
 
+        Camera();
         Camera(vector_t origin, vector_t dir, double focalLength);
+        Camera(nlohmann::json json);
     };
 }; // namespace Object
 
 class Scene
 {
 public:
+    object::Camera mCamera;
+
     // List of primitive shapes, used for simple geometry
     std::vector<object::Primitive> mPrimitives;
 
-    // Attributes pulled from OBJ files, used for complex geometry
-    tinyobj::attrib_t mAttributes;
-    std::vector<tinyobj::shape_t> mShapes;
-    std::vector<tinyobj::material_t> mMaterials;
+    // Dedicated list for lights, we'll be using this a lot
+    std::vector<object::Light> mLights;
+
+    // List of OBJ files, containing their asssets
+    std::vector<tinyobj::ObjReader> mObjs;
+
+    Scene();
 
     /**
      * @brief Load the scene data from a JSON file and
      * populate all of the objects at their correct coordinates.
      *
      * @param sceneJsonPath
-     * @return int
      */
-    int load(std::string sceneJsonPath);
+    void load(std::string sceneJsonPath);
 
 private:
 };
