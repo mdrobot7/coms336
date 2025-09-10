@@ -12,10 +12,11 @@
 #define G (1)
 #define B (2)
 
-Render::Render(Scene &scene, int width, int height, int jobs) : mScene(scene)
+Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs) : mScene(scene)
 {
     mWidth = width;
     mHeight = height;
+    mAntiAliasingLevel = antiAliasingLevel;
     mFb = (uint8_t *)malloc(width * height * 3); // 24 bit color, 8 bits per channel
     if (!mFb)
     {
@@ -34,10 +35,25 @@ Render::~Render()
 
 int Render::run()
 {
-    // Spawn our rays from the camera
+    // Spawn our rays from the camera.
+    // mAntiAliasingLevel^2 rays per pixel.
+    std::cout << "Creating rays..." << std::endl;
+    mRays.resize(mHeight);
     for (int y = 0; y < mHeight; y++)
     {
+        mRays[y].resize(mWidth);
+        for (int x = 0; x < mWidth; x++)
+        {
+            mRays[y][x].resize(mAntiAliasingLevel * mAntiAliasingLevel);
+            for (vector_t v : getImgPlanePixelMultiple(y, x))
+            {
+                vector_t vRay = Matrix::vsub(v, mScene.mCamera.mOrigin);
+                mRays[y][x][0] = Ray(mScene.mCamera.mOrigin, Matrix::vnorm(vRay));
+            }
+        }
     }
+    std::cout << "Created " << mRays.size() * mRays[0].size() * mRays[0][0].size() << " rays." << std::endl;
+    std::cout << "Starting render with " << mJobs << " threads..." << std::endl;
 
     return 0;
 }
@@ -126,6 +142,24 @@ void Render::setupImgPlane()
 
 vector_t Render::getImgPlanePixel(int y, int x)
 {
-    vector_t ret = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, (double)y / mHeight));
-    return Matrix::vadd(ret, Matrix::vscale(mPlaneWidth, (double)x / mWidth));
+    vector_t ret = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, ((double)y / mHeight) + 0.5));
+    return Matrix::vadd(ret, Matrix::vscale(mPlaneWidth, ((double)x / mWidth) + 0.5));
+}
+
+matrix_t Render::getImgPlanePixelMultiple(int y, int x)
+{
+    double step = 1.0 / mAntiAliasingLevel;
+    matrix_t ret = matrix_t(mAntiAliasingLevel * mAntiAliasingLevel);
+    int i = 0;
+
+    // Make sure our grid is centered on the pixel
+    for (double dy = y + 0.5 * step; dy < (y + 0.99); dy += step)
+    {
+        for (double dx = x + 0.5 * step; dx < (x + 0.99); dx += step)
+        {
+            vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, (double)dy / mHeight));
+            ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, (double)dx / mWidth));
+        }
+    }
+    return ret;
 }
