@@ -7,5 +7,6 @@ public:
     vector_t mOrigin;
     vector_t mDir;
 
+    Ray();
     Ray(vector_t origin, vector_t dir);
 };
