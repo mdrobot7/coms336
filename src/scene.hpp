@@ -26,7 +26,7 @@ namespace object
     public:
         Primitive();
         Primitive(nlohmann::json json);
-        static Ray collide(Ray incoming);
+        Ray collide(Ray incoming);
     };
 
     /**
@@ -45,7 +45,7 @@ namespace object
         Triangle(vector_t v0, vector_t v1, vector_t v2, bool spectral, color_t color);
         Triangle(nlohmann::json json);
 
-        static Ray collide(Ray incoming);
+        Ray collide(Ray incoming);
     };
 
     /**
@@ -56,27 +56,43 @@ namespace object
     class Sphere : public Primitive
     {
     public:
-        vector_t mCenter;
+        vector_t mOrigin;
         double mRadius;
         bool mSpectral; // True for spectral (shiny), false for diffuse (dull)
         color_t mColor;
 
-        Sphere(vector_t center, double radius, bool spectral, color_t color);
+        Sphere(vector_t origin, double radius, bool spectral, color_t color);
         Sphere(nlohmann::json json);
 
-        static Ray collide(Ray incoming);
+        Ray collide(Ray incoming);
     };
 
     class Light : public Primitive
     {
     public:
-        vector_t mCenter;
+        vector_t mOrigin;
         color_t mColor;
 
-        Light(vector_t center, color_t color);
+        Light(vector_t origin, color_t color);
         Light(nlohmann::json json);
 
-        static Ray collide(Ray incoming);
+        Ray collide(Ray incoming);
+    };
+
+    class Model : public Primitive
+    {
+    public:
+        vector_t mOrigin;
+        vector_t mFront;
+        vector_t mTop;
+        vector_t mScale; // [scaleX, scaleY, scaleZ]
+
+        tinyobj::ObjReader &mObj;
+
+        Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
+        Model(nlohmann::json json, tinyobj::ObjReader obj);
+
+        Ray collide(Ray incoming);
     };
 
     class Camera
@@ -97,14 +113,15 @@ class Scene
 public:
     object::Camera mCamera;
 
-    // List of primitive shapes, used for simple geometry
+    // List of scene objects
     std::vector<object::Primitive> mPrimitives;
 
     // Dedicated list for lights, we'll be using this a lot
     std::vector<object::Light> mLights;
 
     // List of OBJ files, containing their asssets
-    std::vector<tinyobj::ObjReader> mObjs;
+    std::vector<tinyobj::ObjReader> mObjReaders;
+    std::vector<std::string> mObjFilenames;
 
     Scene();
 

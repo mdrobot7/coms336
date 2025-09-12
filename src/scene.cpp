@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include <algorithm>
 #include "scene.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION // Can only be in ONE cpp file
@@ -50,7 +51,7 @@ namespace object
 
     Sphere::Sphere(vector_t center, double radius, bool spectral, color_t color)
     {
-        mCenter = center;
+        mOrigin = center;
         mRadius = radius;
         mSpectral = spectral;
         mColor = color;
@@ -58,7 +59,7 @@ namespace object
 
     Sphere::Sphere(nlohmann::json json)
     {
-        mCenter = vector_t{json["x"],
+        mOrigin = vector_t{json["x"],
                            json["y"],
                            json["z"]};
         mRadius = json["radius"];
@@ -75,17 +76,41 @@ namespace object
 
     Light::Light(vector_t center, color_t color)
     {
-        mCenter = center;
+        mOrigin = center;
         mColor = color;
     }
 
     Light::Light(nlohmann::json json)
     {
-        mCenter = vector_t{json["x"],
+        mOrigin = vector_t{json["x"],
                            json["y"],
                            json["z"]};
         int color = std::stoi(std::string(json["color"]), 0, 16);
         mColor = intToColor(color);
+    }
+
+    Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)
+    {
+        mOrigin = origin;
+        mFront = front;
+        mTop = top;
+        mScale = scale;
+    }
+
+    Model::Model(nlohmann::json json, tinyobj::ObjReader obj) : mObj(obj)
+    {
+        mOrigin = vector_t{json["origin"]["x"],
+                           json["origin"]["y"],
+                           json["origin"]["z"]};
+        mFront = vector_t{json["front"]["x"],
+                          json["front"]["y"],
+                          json["front"]["z"]};
+        mTop = vector_t{json["top"]["x"],
+                        json["top"]["y"],
+                        json["top"]["z"]};
+        mScale = vector_t{json["scale"]["x"],
+                          json["scale"]["y"],
+                          json["scale"]["z"]};
     }
 
     Camera::Camera() {}
@@ -127,14 +152,33 @@ void Scene::load(std::string sceneJsonPath)
     {
         if (i["type"] == "obj")
         {
-            // Attributes and vertices are stored in the ObjReader object.
+            // Attributes and vertices are stored in the tinyobj::ObjReader object.
             // We could spend time deep-copying them out, but that seems foolish.
             // Just keep the reader around.
-            mObjs.push_back(tinyobj::ObjReader());
-            if (!mObjs.back().ParseFromFile(i["path"], readerConfig))
+
+            // Don't load the same thing multiple times
+            size_t fileIndex;
+            for (fileIndex = 0; fileIndex < mObjFilenames.size(); fileIndex++)
             {
-                f.close();
-                throw std::invalid_argument("OBJ file parse failed");
+                if (mObjFilenames[fileIndex] == i["path"])
+                {
+                    break;
+                }
+            }
+            if (fileIndex != mObjFilenames.size())
+            {
+                mPrimitives.push_back(object::Model(i, mObjReaders[fileIndex]));
+            }
+            else
+            {
+                mObjReaders.push_back(tinyobj::ObjReader());
+                mObjFilenames.push_back(i["path"]);
+                if (!mObjReaders.back().ParseFromFile(i["path"], readerConfig))
+                {
+                    f.close();
+                    throw std::invalid_argument("OBJ file parse failed");
+                }
+                mPrimitives.push_back(object::Model(i, mObjReaders.back()));
             }
         }
         else if (i["type"] == "light")
