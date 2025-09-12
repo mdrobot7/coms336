@@ -16,20 +16,23 @@ make all
 
 ## Tasks
 - [ ] A camera with configurable position, orientation, and field of view
-- [ ] Anti-aliasing
+- [x] Anti-aliasing
 - [ ] Ray/sphere intersections
 - [ ] Ray/triangle intersections
-- [ ] The ability to load textures (file format(s) of your choice; may use third-party libraries)
+- [x] The ability to load textures (file format(s) of your choice; may use third-party libraries)
+      - Done through tinyobjloader
 - [ ] Textured spheres and triangles
-- [ ] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading)
+- [x] The ability to load and render triangle meshes (file format(s) of your choice; may use third-party libraries for loading)
+      - Done through tinyobjloader
 - [ ] A spatial subdivision acceleration structure of your choice
 - [ ] Specular, diffuse, and dielectric materials (per first volume of Ray Tracing in One Weekend series)
 - [ ] Emissive materials (lights)
 
 Required extras (C-):
 - [ ] Importance sampling (15)
-- [ ] Parallelization (10)
+- [x] Parallelization (10)
 
 Non required extras:
-- [ ] Object instancing(???) (10)
+- [x] Object instancing: being able to copy/rescale/rotate the same object throughout the scene (10)
+      - Done with scene JSON and preventing multiple loads of the same OBJ file.
 - [ ] BRDFs (30)
