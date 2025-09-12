@@ -5,9 +5,14 @@
             "y": 0,
             "z": 0
         },
-        "direction": {
+        "front": {
             "x": 1,
             "y": 0,
+            "z": 0
+        },
+        "top": {
+            "x": 1,
+            "y": 1,
             "z": 0
         },
         "focalLength": 5
@@ -50,30 +55,6 @@
             "y": 20,
             "z": 20,
             "color": "0xFFFFFF"
-        },
-        {
-            "type": "obj",
-            "origin": {
-                "x": 5,
-                "y": 5,
-                "z": 5
-            },
-            "front": {
-                "x": 1,
-                "y": 0,
-                "z": 0
-            },
-            "top": {
-                "x": 0,
-                "y": 1,
-                "z": 0
-            },
-            "scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
-            },
-            "path": "./assets/foo.obj"
         }
     ]
 }

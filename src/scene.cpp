@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include "matrix.hpp"
 #include "scene.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION // Can only be in ONE cpp file
@@ -92,8 +93,8 @@ namespace object
     Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)
     {
         mOrigin = origin;
-        mFront = front;
-        mTop = top;
+        mFront = Matrix::vnorm(front);
+        mTop = Matrix::vnorm(top);
         mScale = scale;
     }
 
@@ -102,12 +103,12 @@ namespace object
         mOrigin = vector_t{json["origin"]["x"],
                            json["origin"]["y"],
                            json["origin"]["z"]};
-        mFront = vector_t{json["front"]["x"],
-                          json["front"]["y"],
-                          json["front"]["z"]};
-        mTop = vector_t{json["top"]["x"],
-                        json["top"]["y"],
-                        json["top"]["z"]};
+        mFront = Matrix::vnorm(vector_t{json["front"]["x"],
+                                        json["front"]["y"],
+                                        json["front"]["z"]});
+        mTop = Matrix::vnorm(vector_t{json["top"]["x"],
+                                      json["top"]["y"],
+                                      json["top"]["z"]});
         mScale = vector_t{json["scale"]["x"],
                           json["scale"]["y"],
                           json["scale"]["z"]};
@@ -115,10 +116,11 @@ namespace object
 
     Camera::Camera() {}
 
-    Camera::Camera(vector_t origin, vector_t dir, double focalLength)
+    Camera::Camera(vector_t origin, vector_t front, vector_t top, double focalLength)
     {
         mOrigin = origin;
-        mDir = dir;
+        mFront = Matrix::vnorm(front);
+        mTop = Matrix::vnorm(top);
         mFocalLength = focalLength;
     }
 
@@ -127,9 +129,13 @@ namespace object
         mOrigin = vector_t{json["origin"]["x"],
                            json["origin"]["y"],
                            json["origin"]["z"]};
-        mDir = vector_t{json["direction"]["x"],
-                        json["direction"]["y"],
-                        json["direction"]["z"]};
+        mFront = Matrix::vnorm(vector_t{json["front"]["x"],
+                                        json["front"]["y"],
+                                        json["front"]["z"]});
+
+        mTop = Matrix::vnorm(vector_t{json["top"]["x"],
+                                      json["top"]["y"],
+                                      json["top"]["z"]});
         mFocalLength = json["focalLength"];
     }
 }

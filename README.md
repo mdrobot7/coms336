@@ -15,7 +15,7 @@ make all
 
 
 ## Tasks
-- [ ] A camera with configurable position, orientation, and field of view
+- [x] A camera with configurable position, orientation, and field of view
 - [x] Anti-aliasing
 - [ ] Ray/sphere intersections
 - [ ] Ray/triangle intersections

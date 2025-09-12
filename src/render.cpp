@@ -191,51 +191,36 @@ uint8_t *Render::getPixel(int y, int x)
 void Render::setupImgPlane()
 {
     /**
-     * Make the assumption that the x axis of the scene is always
-     * parallel to the XZ plane (the floor). aka the camera is always
-     * upright.
-     *
      * The math:
      * - Direction vector will *always* be normal to the image plane.
      *   The direction vector is also guaranteed to be normalized.
-     * - The height vector will *always* point down. We made the assumption
-     *   that the camera is upright.
-     * - The width vector will *always* be in the XZ plane. The camera is upright.
+     * - Top vector will *always* be in the plane. Also guaranteed to be normalized.
+     * - Top vector will *always* be parallel to the height vector.
      * - Goal: Find the vectors for the width and height of the image plane
      *         and the position of the top left corner.
      *
-     * We can find the width vector by projecting the dir. vec. into
-     * the xz-plane. We then find the vector 90 degrees to the right.
-     * That is the width vector. Normalize and scale to match the pixel
-     * width.
+     * The direction and top vectors define the image plane, it's just not in
+     * the right spot and not a fixed size. We're also missing the width vector.
      *
-     * Take the cross product of the direction and width vectors to get
-     * the height vector. Check its direction and flip vector signs
-     * accordingly (should always point down towards -Y). Normalize
-     * and scale to match pixel height.
-     *
-     * Add everything up to find the top left corner.
+     * Width vector can be found with a cross product, then it's just a matter of
+     * translating the plane into place to find the top left corner. It's centered
+     * at the origin now, account for the image plane size, focal length, and camera
+     * position.
      */
 
-    vector_t dirInXZ = mScene.mCamera.mDir;
-    dirInXZ[V_Y] = 0;
-    mPlaneWidth = Matrix::vscale(Matrix::vnorm({-dirInXZ[V_Z], 0, dirInXZ[V_X]}), mWidth);
-    mPlaneHeight = Matrix::vscale(Matrix::vnorm(Matrix::cross3(mScene.mCamera.mDir, mPlaneWidth)), mHeight);
-    if (mPlaneHeight[V_Y] > 0.0)
-    {
-        throw std::logic_error("Height vector points towards +Y");
-    }
+    mPlaneHeight = Matrix::vscale(mScene.mCamera.mTop, -1);
+    mPlaneWidth = Matrix::vnorm(Matrix::cross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
 
-    vector_t imagePlaneCenter = Matrix::vadd(mScene.mCamera.mOrigin, Matrix::vscale(mScene.mCamera.mDir, mScene.mCamera.mFocalLength));
-    vector_t halfWidth = Matrix::vscale(mPlaneWidth, 0.5);
-    vector_t halfHeight = Matrix::vscale(mPlaneHeight, 0.5);
-    mPlaneOrigin = Matrix::vsub(Matrix::vsub(imagePlaneCenter, halfWidth), halfHeight);
+    vector_t focalLength = Matrix::vscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
+    vector_t halfHeight = Matrix::vscale(mPlaneHeight, mHeight * 0.5);
+    vector_t halfWidth = Matrix::vscale(mPlaneWidth, mWidth * 0.5);
+    mPlaneOrigin = Matrix::vadd(mScene.mCamera.mOrigin, Matrix::vsub(focalLength, Matrix::vadd(halfWidth, halfHeight)));
 }
 
 vector_t Render::getImgPlanePixel(int y, int x)
 {
-    vector_t ret = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, ((double)y / mHeight) + 0.5));
-    return Matrix::vadd(ret, Matrix::vscale(mPlaneWidth, ((double)x / mWidth) + 0.5));
+    vector_t ret = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, y + 0.5));
+    return Matrix::vadd(ret, Matrix::vscale(mPlaneWidth, x + 0.5));
 }
 
 matrix_t Render::getImgPlanePixelMultiple(int y, int x)
@@ -249,8 +234,8 @@ matrix_t Render::getImgPlanePixelMultiple(int y, int x)
     {
         for (double dx = x + 0.5 * step; dx < (x + 0.99); dx += step)
         {
-            vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, (double)dy / mHeight));
-            ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, (double)dx / mWidth));
+            vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, dy));
+            ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
         }
     }
     return ret;

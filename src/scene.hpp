@@ -99,11 +99,12 @@ namespace object
     {
     public:
         vector_t mOrigin;
-        vector_t mDir;
+        vector_t mFront;
+        vector_t mTop;
         double mFocalLength;
 
         Camera();
-        Camera(vector_t origin, vector_t dir, double focalLength);
+        Camera(vector_t origin, vector_t front, vector_t top, double focalLength);
         Camera(nlohmann::json json);
     };
 }; // namespace Object

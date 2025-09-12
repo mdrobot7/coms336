@@ -46,7 +46,7 @@ private:
 
     std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
     std::mutex mRaysLock;
-    vector_t mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Origin is top left corner
+    vector_t mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Width/heights are normalized, origin is top left corner
 
     /**
      * @brief Job for an individual thread in the thread
