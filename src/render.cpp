@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <thread>
 #include <chrono>
+#include <ctime>
 #include "render.hpp"
 #include "matrix.hpp"
 
@@ -29,6 +30,8 @@ Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel,
     mNextPixelX = mNextPixelY = 0;
     mKillThreads = false;
 
+    srand(time(NULL));
+
     setupImgPlane();
 }
 
@@ -49,10 +52,11 @@ int Render::run()
         for (int x = 0; x < mWidth; x++)
         {
             mRays[y][x].resize(mAntiAliasingLevel * mAntiAliasingLevel);
-            for (vector_t v : getImgPlanePixelMultiple(y, x))
+            matrix_t imagePlaneVecs = getImgPlanePixelMultiple(y, x);
+            for (int i = 0; i < mAntiAliasingLevel * mAntiAliasingLevel; i++)
             {
-                vector_t vRay = Matrix::vsub(v, mScene.mCamera.mOrigin);
-                mRays[y][x][0] = Ray(mScene.mCamera.mOrigin, Matrix::vnorm(vRay));
+                vector_t vRay = Matrix::vsub(imagePlaneVecs[i], mScene.mCamera.mOrigin);
+                mRays[y][x][i] = Ray(mScene.mCamera.mOrigin, Matrix::vnorm(vRay));
             }
         }
     }
@@ -225,18 +229,14 @@ vector_t Render::getImgPlanePixel(int y, int x)
 
 matrix_t Render::getImgPlanePixelMultiple(int y, int x)
 {
-    double step = 1.0 / mAntiAliasingLevel;
-    matrix_t ret = matrix_t(mAntiAliasingLevel * mAntiAliasingLevel);
-    int i = 0;
+    matrix_t ret = matrix_t(mAntiAliasingLevel);
 
-    // Make sure our grid is centered on the pixel
-    for (double dy = y + 0.5 * step; dy < (y + 0.99); dy += step)
+    for (int i = 0; i < mAntiAliasingLevel; i++)
     {
-        for (double dx = x + 0.5 * step; dx < (x + 0.99); dx += step)
-        {
-            vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, dy));
-            ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
-        }
+        double dx = x + (rand() / ((double)RAND_MAX + 1));
+        double dy = y + (rand() / ((double)RAND_MAX + 1));
+        vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, dy));
+        ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
     }
     return ret;
 }

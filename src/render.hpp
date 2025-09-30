@@ -74,10 +74,11 @@ private:
     vector_t getImgPlanePixel(int y, int x);
 
     /**
-     * @brief Get a set of vectors distributed in a square grid within
-     * the specified pixel. The grid is mAntiAliasingLevel^2.
+     * @brief Get a set of mAntiAliasingLevel vectors randomly
+     * distributed in the pixel of the image plane specified
+     * by x, y.
      *
-     * @return matrix_t A mAntiAliasingLevel^2 x 3 matrix of row vectors
+     * @return matrix_t A mAntiAliasingLevel x 3 matrix of row vectors
      */
     matrix_t getImgPlanePixelMultiple(int y, int x);
 };

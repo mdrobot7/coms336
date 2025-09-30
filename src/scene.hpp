@@ -120,7 +120,7 @@ public:
     // Dedicated list for lights, we'll be using this a lot
     std::vector<object::Light> mLights;
 
-    // List of OBJ files, containing their asssets
+    // List of OBJ files, containing their assets
     std::vector<tinyobj::ObjReader> mObjReaders;
     std::vector<std::string> mObjFilenames;
 
