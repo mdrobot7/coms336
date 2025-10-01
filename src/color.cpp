@@ -1,4 +1,24 @@
+#include <stdexcept>
 #include "color.hpp"
+
+const std::map<std::string, enum Color::Surface> Color::sSurfaceMap = {
+    {"specular", Color::SPECULAR},
+    {"diffuse", Color::DIFFUSE},
+    {"dielectric", Color::DIELECTRIC},
+};
+
+enum Color::Surface Color::stringToSurface(std::string str)
+{
+    auto val = sSurfaceMap.find(str);
+    if (val != sSurfaceMap.end())
+    {
+        return val->second;
+    }
+    else
+    {
+        throw std::invalid_argument("Invalid surface type");
+    }
+}
 
 vector_t Color::intToColor(int i)
 {

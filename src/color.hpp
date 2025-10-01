@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <map>
+#include <string>
 #include "matrix.hpp"
 
 class Color
@@ -8,6 +10,15 @@ class Color
     // Each color channel is [0, 1) and can be rescaled to any color depth
 
 public:
+    enum Surface
+    {
+        SPECULAR = 0,
+        DIFFUSE,
+        DIELECTRIC,
+    };
+
+    static enum Surface stringToSurface(std::string str);
+
     /**
      * @brief Convert a 24-bit color to a color vector.
      *
@@ -43,4 +54,7 @@ public:
      * @return vector_t
      */
     static vector_t refract(vector_t surface, vector_t incoming);
+
+private:
+    static const std::map<std::string, enum Surface> sSurfaceMap;
 };
