@@ -11,7 +11,7 @@
 class Render
 {
 public:
-    Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs);
+    Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
     ~Render();
 
     /**
@@ -43,6 +43,8 @@ private:
     int mNextPixelX, mNextPixelY;
     std::mutex mNextPixelLock;
     bool mKillThreads;
+
+    int mMaxBounces; // Max bounces per ray before we call it black
 
     std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
     std::mutex mRaysLock;

@@ -15,7 +15,7 @@
 #define G (1)
 #define B (2)
 
-Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs) : mScene(scene)
+Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene)
 {
     mWidth = width;
     mHeight = height;
@@ -29,6 +29,8 @@ Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel,
     mJobs = jobs;
     mNextPixelX = mNextPixelY = 0;
     mKillThreads = false;
+
+    mMaxBounces = maxBounces;
 
     srand(time(NULL));
 
@@ -169,16 +171,36 @@ void Render::renderPixel()
         rays = mRays[nextY][nextX];
         mRaysLock.unlock();
 
+        color_t pixelColor = {0.0, 0.0, 0.0};
         for (Ray r : rays)
         {
-            // Trace the ray
+            // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
+            object::Primitive::Collision collision = object::Primitive::Collision::MISSED;
+            for (int i = 0; i < mMaxBounces && collision == object::Primitive::Collision::REFLECTED; i++)
+            {
+                for (object::Primitive p : mScene.mPrimitives)
+                {
+                    collision = p.collide(r);
+                    if (collision != object::Primitive::Collision::MISSED)
+                    {
+                        break;
+                    }
+                }
+            }
+            if (collision == object::Primitive::Collision::ABSORBED)
+            {
+                // If the ray is absorbed, we've found its color. Otherwise,
+                // it's black (don't need to add it, it's just adding 0).
+                pixelColor = Matrix::vadd(pixelColor, r.mColor);
+            }
         }
+        pixelColor = Matrix::vscale(pixelColor, 1.0 / mAntiAliasingLevel); // Average our ray colors
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);
-        pixel[R] = 255;
-        pixel[G] = 128;
-        pixel[B] = 0;
+        pixel[R] = (uint8_t)(pixelColor[R] * 256);
+        pixel[G] = (uint8_t)(pixelColor[G] * 256);
+        pixel[B] = (uint8_t)(pixelColor[B] * 256);
         mFbLock.unlock();
     }
 }
