@@ -43,7 +43,7 @@ Render::~Render()
 int Render::run()
 {
     // Spawn our rays from the camera.
-    // mAntiAliasingLevel^2 rays per pixel.
+    // mAntiAliasingLevel rays per pixel.
     std::cout << "Creating rays..." << std::endl;
     mRays.resize(mHeight);
     for (int y = 0; y < mHeight; y++)
@@ -51,9 +51,9 @@ int Render::run()
         mRays[y].resize(mWidth);
         for (int x = 0; x < mWidth; x++)
         {
-            mRays[y][x].resize(mAntiAliasingLevel * mAntiAliasingLevel);
+            mRays[y][x].resize(mAntiAliasingLevel);
             matrix_t imagePlaneVecs = getImgPlanePixelMultiple(y, x);
-            for (int i = 0; i < mAntiAliasingLevel * mAntiAliasingLevel; i++)
+            for (int i = 0; i < mAntiAliasingLevel; i++)
             {
                 vector_t vRay = Matrix::vsub(imagePlaneVecs[i], mScene.mCamera.mOrigin);
                 mRays[y][x][i] = Ray(mScene.mCamera.mOrigin, Matrix::vnorm(vRay));
