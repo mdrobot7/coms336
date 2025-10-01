@@ -50,10 +50,25 @@
             "color": "0x00FF00"
         },
         {
-            "type": "light",
-            "x": 20,
-            "y": 20,
-            "z": 20,
+            "type": "triangle",
+            "vertices": [
+                {
+                    "x": 19,
+                    "y": 19,
+                    "z": 19
+                },
+                {
+                    "x": 20,
+                    "y": 20,
+                    "z": 20
+                },
+                {
+                    "x": 21,
+                    "y": 21,
+                    "z": 21
+                }
+            ],
+            "surface": "emissive",
             "color": "0xFFFFFF"
         }
     ]
