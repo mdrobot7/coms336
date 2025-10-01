@@ -5,10 +5,12 @@
 #include <string>
 #include "matrix.hpp"
 
+// Typedef to make the param/return types clear
+// Each color channel is [0, 1) and can be rescaled to any color depth
+typedef vector_t color_t;
+
 class Color
 {
-    // Each color channel is [0, 1) and can be rescaled to any color depth
-
 public:
     enum Surface
     {
@@ -23,9 +25,9 @@ public:
      * @brief Convert a 24-bit color to a color vector.
      *
      * @param i
-     * @return vector_t
+     * @return color_t
      */
-    static vector_t intToColor(int i);
+    static color_t intToColor(int i);
 
     /**
      * @brief Convert a color vector to a 24-bit color.
@@ -33,7 +35,7 @@ public:
      * @param c
      * @return int
      */
-    static int colorToInt(vector_t c);
+    static int colorToInt(color_t c);
 
     /**
      * @brief Bounce a colored ray off of a colored object.
@@ -41,9 +43,9 @@ public:
      *
      * @param surface
      * @param incoming
-     * @return vector_t
+     * @return color_t
      */
-    static vector_t attenuate(vector_t surface, vector_t incoming);
+    static color_t attenuate(color_t surface, color_t incoming);
 
     /**
      * @brief Send a colored ray through a dielectric (glass,
@@ -51,9 +53,9 @@ public:
      *
      * @param surface
      * @param incoming
-     * @return vector_t
+     * @return color_t
      */
-    static vector_t refract(vector_t surface, vector_t incoming);
+    static color_t refract(color_t surface, color_t incoming);
 
 private:
     static const std::map<std::string, enum Surface> sSurfaceMap;
