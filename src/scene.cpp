@@ -115,7 +115,6 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
-            incoming.addCollision(mColor);
             return specular(incoming, intersection, mNormal);
         case Color::DIFFUSE:
             incoming.addCollision(mColor);
@@ -148,8 +147,45 @@ namespace object
 
     bool Sphere::collide(Ray &incoming)
     {
-        // TODO
-        return true;
+        // The math for this is really complicated, it's basically
+        // solving a quadratic equation. See Ray Tracing in One Weekend
+        vector_t centerMinusIncoming = Matrix::vsub(mOrigin, incoming.mOrigin);
+        double a = Matrix::dot(incoming.mDir, incoming.mDir);
+        double b = -2.0 * Matrix::dot(incoming.mDir, centerMinusIncoming);
+        double c = Matrix::dot(centerMinusIncoming, centerMinusIncoming) - mRadius * mRadius;
+        double discriminant = b * b - 4.0 * a * c;
+        double t = 0;
+        if (discriminant < 0)
+        {
+            // No intersection
+            return false;
+        }
+        else
+        {
+            // Take the negative of the +/-, we want the smaller t (closer point)
+            t = (-b - sqrt(discriminant)) / (2.0 * a);
+            if (t < 0)
+            {
+                // Don't hit things behind us
+                return false;
+            }
+        }
+
+        // Bounce it
+        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
+        vector_t normal = Matrix::vscale(Matrix::vsub(intersection, mOrigin), 1.0 / mRadius);
+        switch (mSurface)
+        {
+        case Color::SPECULAR:
+            return specular(incoming, intersection, normal);
+        case Color::DIFFUSE:
+            incoming.addCollision(mColor);
+            return diffuse(incoming, intersection, normal);
+        case Color::DIELECTRIC:
+            incoming.addCollision(mColor);
+            return dielectric(incoming);
+        }
+        throw std::invalid_argument("Sphere collision error");
     }
 
     Light::Light(vector_t center, color_t color)
