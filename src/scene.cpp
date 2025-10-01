@@ -16,10 +16,10 @@ namespace object
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json json) { (void)json; }
 
-    bool Primitive::collide(Ray &incoming)
+    enum Primitive::Collision Primitive::collide(Ray &incoming)
     {
         (void)incoming;
-        return false;
+        return Collision::MISSED;
     }
 
     bool Primitive::specular(Ray &incoming, vector_t intersection, vector_t normal)
@@ -83,14 +83,14 @@ namespace object
         mNormal = Matrix::vnorm(mNormal);
     }
 
-    bool Triangle::collide(Ray &incoming)
+    enum Primitive::Collision Triangle::collide(Ray &incoming)
     {
         // Check ray-plane intersection
         double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
         if (CLOSE_TO(dirDotNorm, 0.0))
         {
             // Incoming is parallel
-            return true;
+            return Collision::MISSED;
         }
 
         double t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
@@ -108,23 +108,23 @@ namespace object
         if (alpha < 0.0 || beta < 0.0 || gamma < 0.0)
         {
             // Did not intersect
-            return true;
+            return Collision::MISSED;
         }
 
         // Bounce it
         switch (mSurface)
         {
         case Color::SPECULAR:
-            return specular(incoming, intersection, mNormal);
+            return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
             incoming.addCollision(mColor);
-            return diffuse(incoming, intersection, mNormal);
+            return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
-            return dielectric(incoming);
+            return (dielectric(incoming) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             incoming.addCollision(mColor);
-            return false; // Emissive surfaces never reflect
+            return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Triangle collision error");
     }
@@ -148,7 +148,7 @@ namespace object
         mColor = Color::intToColor(color);
     }
 
-    bool Sphere::collide(Ray &incoming)
+    enum Primitive::Collision Sphere::collide(Ray &incoming)
     {
         // The math for this is really complicated, it's basically
         // solving a quadratic equation. See Ray Tracing in One Weekend
@@ -161,7 +161,7 @@ namespace object
         if (discriminant < 0)
         {
             // No intersection
-            return false;
+            return Collision::MISSED;
         }
         else
         {
@@ -170,7 +170,7 @@ namespace object
             if (t < 0)
             {
                 // Don't hit things behind us
-                return false;
+                return Collision::MISSED;
             }
         }
 
@@ -180,16 +180,16 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
-            return specular(incoming, intersection, normal);
+            return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
             incoming.addCollision(mColor);
-            return diffuse(incoming, intersection, normal);
+            return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
-            return dielectric(incoming);
+            return (dielectric(incoming) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             incoming.addCollision(mColor);
-            return false; // Emissive surfaces never reflect
+            return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Sphere collision error");
     }

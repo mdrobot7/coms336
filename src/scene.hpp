@@ -13,6 +13,13 @@ namespace object
     class Primitive
     {
     public:
+        enum Collision
+        {
+            REFLECTED = 0,
+            ABSORBED,
+            MISSED,
+        };
+
         Primitive();
         Primitive(nlohmann::json json);
 
@@ -20,10 +27,9 @@ namespace object
          * @brief Collide a ray with this object.
          *
          * @param incoming Incoming ray
-         * @return true If the ray should keep bouncing
-         * @return false If the ray has been absorbed
+         * @return enum Collision Type of collision that occurred
          */
-        bool collide(Ray &incoming);
+        enum Collision collide(Ray &incoming);
 
         // Ray collision helpers (common to all object types)
 
@@ -76,7 +82,7 @@ namespace object
         Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color);
         Triangle(nlohmann::json json);
 
-        bool collide(Ray &incoming);
+        enum Collision collide(Ray &incoming);
     };
 
     /**
@@ -95,7 +101,7 @@ namespace object
         Sphere(vector_t origin, double radius, enum Color::Surface surface, color_t color);
         Sphere(nlohmann::json json);
 
-        bool collide(Ray &incoming);
+        enum Collision collide(Ray &incoming);
     };
 
     class Model : public Primitive
@@ -111,7 +117,7 @@ namespace object
         Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
         Model(nlohmann::json json, tinyobj::ObjReader obj);
 
-        bool collide(Ray &incoming);
+        enum Collision collide(Ray &incoming);
     };
 
     class Camera
