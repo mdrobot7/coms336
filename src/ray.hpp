@@ -1,5 +1,6 @@
 #pragma once
 #include "matrix.hpp"
+#include "color.hpp"
 
 class Ray
 {
