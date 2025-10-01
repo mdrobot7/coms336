@@ -122,6 +122,9 @@ namespace object
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
             return dielectric(incoming);
+        case Color::EMISSIVE:
+            incoming.addCollision(mColor);
+            return false; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Triangle collision error");
     }
@@ -184,23 +187,11 @@ namespace object
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
             return dielectric(incoming);
+        case Color::EMISSIVE:
+            incoming.addCollision(mColor);
+            return false; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Sphere collision error");
-    }
-
-    Light::Light(vector_t center, color_t color)
-    {
-        mOrigin = center;
-        mColor = color;
-    }
-
-    Light::Light(nlohmann::json json)
-    {
-        mOrigin = vector_t{json["x"],
-                           json["y"],
-                           json["z"]};
-        int color = std::stoi(std::string(json["color"]), 0, 16);
-        mColor = Color::intToColor(color);
     }
 
     Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)
@@ -299,10 +290,6 @@ void Scene::load(std::string sceneJsonPath)
                 }
                 mPrimitives.push_back(object::Model(i, mObjReaders.back()));
             }
-        }
-        else if (i["type"] == "light")
-        {
-            mLights.push_back(object::Light(i));
         }
         else if (i["type"] == "sphere")
         {

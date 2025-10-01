@@ -98,18 +98,6 @@ namespace object
         bool collide(Ray &incoming);
     };
 
-    class Light : public Primitive
-    {
-    public:
-        vector_t mOrigin;
-        color_t mColor;
-
-        Light(vector_t origin, color_t color);
-        Light(nlohmann::json json);
-
-        bool collide(Ray &incoming);
-    };
-
     class Model : public Primitive
     {
     public:
@@ -147,9 +135,6 @@ public:
 
     // List of scene objects
     std::vector<object::Primitive> mPrimitives;
-
-    // Dedicated list for lights, we'll be using this a lot
-    std::vector<object::Light> mLights;
 
     // List of OBJ files, containing their assets
     std::vector<tinyobj::ObjReader> mObjReaders;

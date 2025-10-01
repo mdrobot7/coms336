@@ -5,6 +5,7 @@ const std::map<std::string, enum Color::Surface> Color::sSurfaceMap = {
     {"specular", Color::SPECULAR},
     {"diffuse", Color::DIFFUSE},
     {"dielectric", Color::DIELECTRIC},
+    {"emissive", Color::EMISSIVE},
 };
 
 enum Color::Surface Color::stringToSurface(std::string str)

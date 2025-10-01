@@ -17,6 +17,7 @@ public:
         SPECULAR = 0,
         DIFFUSE,
         DIELECTRIC,
+        EMISSIVE,
     };
 
     static enum Surface stringToSurface(std::string str);
