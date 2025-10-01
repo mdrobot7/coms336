@@ -5,6 +5,8 @@
 #include <algorithm>
 #include "matrix.hpp"
 #include "scene.hpp"
+#include "color.hpp"
+#include "common.hpp"
 
 #define TINYOBJLOADER_IMPLEMENTATION // Can only be in ONE cpp file
 #include "tiny_obj_loader.h"
@@ -14,19 +16,52 @@ namespace object
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json json) { (void)json; }
 
-    Ray Primitive::collide(Ray incoming)
+    bool Primitive::collide(Ray &incoming)
     {
-        return incoming;
+        (void)incoming;
+        return false;
     }
 
-    Triangle::Triangle(vector_t v0, vector_t v1, vector_t v2, bool spectral, color_t color)
+    bool Primitive::specular(Ray &incoming, vector_t intersection, vector_t normal)
+    {
+        static const double fuzziness = 0.0; // TODO: Potentially use later
+
+        incoming.mOrigin = intersection;
+        // mDir = mDir - normal * 2 * dot(mDir, normal)
+        incoming.mDir = Matrix::vnorm(Matrix::vsub(incoming.mDir, Matrix::vscale(normal, 2 * Matrix::dot(incoming.mDir, normal))));
+
+        // Add fuzziness. If the fuzzy vector is shot inside the object,
+        // the object just absorbs it and the ray stops.
+        incoming.mDir = Matrix::vadd(incoming.mDir, Matrix::vscale(Matrix::vrand3(), fuzziness));
+        return (Matrix::dot(incoming.mDir, normal) < 0.0);
+    }
+
+    bool Primitive::diffuse(Ray &incoming, vector_t intersection, vector_t normal)
+    {
+        // Reflect 1 ray with a Lambertian reflection
+        incoming.mOrigin = intersection;
+        incoming.mDir = Matrix::vadd(normal, Matrix::vrand3());
+        return true;
+    }
+
+    bool Primitive::dielectric(Ray &incoming)
+    {
+        // TODO
+        return false;
+    }
+
+    Triangle::Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color)
     {
         mVertices = matrix_t(3);
         mVertices[0] = v0;
-        mVertices[0] = v1;
-        mVertices[0] = v2;
-        mSpectral = spectral;
+        mVertices[1] = v1;
+        mVertices[2] = v2;
+        mSurface = surface;
         mColor = color;
+
+        // Assuming CCW winding order (standard for OBJ and OpenGL)
+        mNormal = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(mVertices[2], mVertices[1]));
+        mNormal = Matrix::vnorm(mNormal);
     }
 
     Triangle::Triangle(nlohmann::json json)
@@ -39,22 +74,64 @@ namespace object
                                     json["vertices"][i]["z"]};
         }
 
-        mSpectral = json["spectral"];
+        mSurface = Color::stringToSurface(json["surface"]);
         int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = intToColor(color);
+        mColor = Color::intToColor(color);
+
+        // Assuming CCW winding order (standard for OBJ and OpenGL)
+        mNormal = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(mVertices[2], mVertices[1]));
+        mNormal = Matrix::vnorm(mNormal);
     }
 
-    Ray Triangle::collide(Ray incoming)
+    bool Triangle::collide(Ray &incoming)
     {
-        // TODO
-        return incoming;
+        // Check ray-plane intersection
+        double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
+        if (CLOSE_TO(dirDotNorm, 0.0))
+        {
+            // Incoming is parallel
+            return true;
+        }
+
+        double t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
+        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
+
+        // Split triangle into subtriangles, calculate normals
+        vector_t normA = Matrix::cross3(Matrix::vsub(mVertices[2], mVertices[1]), Matrix::vsub(intersection, mVertices[1]));
+        vector_t normB = Matrix::cross3(Matrix::vsub(mVertices[0], mVertices[2]), Matrix::vsub(intersection, mVertices[2]));
+        vector_t normC = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(intersection, mVertices[0]));
+
+        // Calculate barycentrics
+        double alpha = Matrix::dot(mNormal, normA) / Matrix::dot(mNormal, mNormal);
+        double beta = Matrix::dot(mNormal, normB) / Matrix::dot(mNormal, mNormal);
+        double gamma = Matrix::dot(mNormal, normC) / Matrix::dot(mNormal, mNormal);
+        if (alpha < 0.0 || beta < 0.0 || gamma < 0.0)
+        {
+            // Did not intersect
+            return true;
+        }
+
+        // Bounce it
+        switch (mSurface)
+        {
+        case Color::SPECULAR:
+            incoming.addCollision(mColor);
+            return specular(incoming, intersection, mNormal);
+        case Color::DIFFUSE:
+            incoming.addCollision(mColor);
+            return diffuse(incoming, intersection, mNormal);
+        case Color::DIELECTRIC:
+            incoming.addCollision(mColor);
+            return dielectric(incoming);
+        }
+        throw std::invalid_argument("Triangle collision error");
     }
 
-    Sphere::Sphere(vector_t center, double radius, bool spectral, color_t color)
+    Sphere::Sphere(vector_t center, double radius, enum Color::Surface surface, color_t color)
     {
         mOrigin = center;
         mRadius = radius;
-        mSpectral = spectral;
+        mSurface = surface;
         mColor = color;
     }
 
@@ -64,15 +141,15 @@ namespace object
                            json["y"],
                            json["z"]};
         mRadius = json["radius"];
-        mSpectral = json["spectral"];
+        mSurface = Color::stringToSurface(json["surface"]);
         int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = intToColor(color);
+        mColor = Color::intToColor(color);
     }
 
-    Ray Sphere::collide(Ray incoming)
+    bool Sphere::collide(Ray &incoming)
     {
         // TODO
-        return incoming;
+        return true;
     }
 
     Light::Light(vector_t center, color_t color)
@@ -87,7 +164,7 @@ namespace object
                            json["y"],
                            json["z"]};
         int color = std::stoi(std::string(json["color"]), 0, 16);
-        mColor = intToColor(color);
+        mColor = Color::intToColor(color);
     }
 
     Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)

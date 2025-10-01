@@ -6,18 +6,7 @@
 #include "tiny_obj_loader.h"
 #include "matrix.hpp"
 #include "ray.hpp"
-
-typedef std::vector<uint8_t> color_t;
-
-static inline color_t intToColor(int i)
-{
-    return color_t{(uint8_t)((i & 0xFF0000) >> 16), (uint8_t)((i & 0xFF00) >> 8), (uint8_t)(i & 0xFF)};
-}
-
-static inline int colorToInt(color_t c)
-{
-    return (c[0] << 16) | (c[1] << 8) | c[2];
-}
+#include "color.hpp"
 
 namespace object
 {
@@ -26,7 +15,48 @@ namespace object
     public:
         Primitive();
         Primitive(nlohmann::json json);
-        Ray collide(Ray incoming);
+
+        /**
+         * @brief Collide a ray with this object.
+         *
+         * @param incoming Incoming ray
+         * @return true If the ray should keep bouncing
+         * @return false If the ray has been absorbed
+         */
+        bool collide(Ray &incoming);
+
+        // Ray collision helpers (common to all object types)
+
+        /**
+         * @brief Handle a specular reflection.
+         *
+         * @param incoming Incoming ray to be reflected
+         * @param intersection Intersection point
+         * @param normal Normal vector of collision surface
+         * @return true If the ray should keep bouncing
+         * @return false If the ray has been absorbed
+         */
+        bool specular(Ray &incoming, vector_t intersection, vector_t normal);
+
+        /**
+         * @brief Handle a diffuse reflection.
+         *
+         * @param incoming Incoming ray to be reflected
+         * @param intersection Intersection point
+         * @param normal Normal vector of collision surface
+         * @return true If the ray should keep bouncing
+         * @return false If the ray has been absorbed
+         */
+        bool diffuse(Ray &incoming, vector_t intersection, vector_t normal);
+
+        /**
+         * @brief Handle a dielectric reflection/refraction.
+         *
+         * @param incoming Incoming ray to be reflected.
+         * @return true If the ray should keep bouncing
+         * @return false If the ray has been absorbed
+         */
+        bool dielectric(Ray &incoming);
     };
 
     /**
@@ -39,13 +69,14 @@ namespace object
     {
     public:
         matrix_t mVertices; // Vertices are row vectors
-        bool mSpectral;     // True for spectral (shiny), false for diffuse (dull)
+        vector_t mNormal;   // Normal vector, determined by winding order of vertices
+        enum Color::Surface mSurface;
         color_t mColor;
 
-        Triangle(vector_t v0, vector_t v1, vector_t v2, bool spectral, color_t color);
+        Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color);
         Triangle(nlohmann::json json);
 
-        Ray collide(Ray incoming);
+        bool collide(Ray &incoming);
     };
 
     /**
@@ -58,13 +89,13 @@ namespace object
     public:
         vector_t mOrigin;
         double mRadius;
-        bool mSpectral; // True for spectral (shiny), false for diffuse (dull)
+        enum Color::Surface mSurface;
         color_t mColor;
 
-        Sphere(vector_t origin, double radius, bool spectral, color_t color);
+        Sphere(vector_t origin, double radius, enum Color::Surface surface, color_t color);
         Sphere(nlohmann::json json);
 
-        Ray collide(Ray incoming);
+        bool collide(Ray &incoming);
     };
 
     class Light : public Primitive
@@ -76,7 +107,7 @@ namespace object
         Light(vector_t origin, color_t color);
         Light(nlohmann::json json);
 
-        Ray collide(Ray incoming);
+        bool collide(Ray &incoming);
     };
 
     class Model : public Primitive
@@ -92,7 +123,7 @@ namespace object
         Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
         Model(nlohmann::json json, tinyobj::ObjReader obj);
 
-        Ray collide(Ray incoming);
+        bool collide(Ray &incoming);
     };
 
     class Camera
