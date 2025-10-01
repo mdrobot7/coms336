@@ -2,6 +2,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cmath>
+#include <cstdlib>
 
 double Matrix::dot(std::vector<double> a, std::vector<double> b)
 {
@@ -65,8 +66,6 @@ std::vector<double> Matrix::vscale(std::vector<double> a, double scalar)
 
 std::vector<double> Matrix::vnorm(std::vector<double> a)
 {
-    std::vector<double> ret(a.size());
-
     double mag = 0.0;
     for (double i : a)
     {
@@ -74,7 +73,12 @@ std::vector<double> Matrix::vnorm(std::vector<double> a)
     }
     mag = sqrt(mag);
 
-    return vscale(a, 1.0 / mag);
+    return (mag != 0.0) ? vscale(a, 1.0 / mag) : a;
+}
+
+std::vector<double> Matrix::vrand3()
+{
+    return Matrix::vnorm(std::vector<double>{(double)rand(), (double)rand(), (double)rand()});
 }
 
 std::vector<std::vector<double>> Matrix::madd(std::vector<std::vector<double>> a, std::vector<std::vector<double>> b)

@@ -44,9 +44,16 @@ public:
     static std::vector<double> vscale(std::vector<double> a, double scalar);
 
     /**
-     * @brief n-dimensional vector norm
+     * @brief n-dimensional vector norm. Attempting to normalize
+     * the 0 vector returns the 0 vector.
      */
     static std::vector<double> vnorm(std::vector<double> a);
+
+    /**
+     * @brief Return a random normalized 3-dimensional vector.
+     * Uses rand() and assumes srand() has already been called.
+     */
+    static std::vector<double> vrand3();
 
     /**
      * @brief m*n matrix add
