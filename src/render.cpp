@@ -85,7 +85,7 @@ int Render::run()
 
         // Lovely progress bar
         const int barWidth = 70;
-        const int progress = (((double)nextY * mWidth + nextX) / (mWidth * mHeight));
+        const double progress = (((double)nextY * mWidth + nextX) / (mWidth * mHeight));
         std::cout << "[";
         int pos = barWidth * progress;
         for (int i = 0; i < barWidth; ++i)
@@ -175,32 +175,33 @@ void Render::renderPixel()
         for (Ray r : rays)
         {
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
-            object::Primitive::Collision collision = object::Primitive::Collision::MISSED;
+            object::Primitive::Collision collision = object::Primitive::Collision::REFLECTED;
             for (int i = 0; i < mMaxBounces && collision == object::Primitive::Collision::REFLECTED; i++)
             {
-                for (object::Primitive p : mScene.mPrimitives)
+                for (const auto &p : mScene.mPrimitives)
                 {
-                    collision = p.collide(r);
+                    collision = p->collide(r);
                     if (collision != object::Primitive::Collision::MISSED)
                     {
                         break;
                     }
                 }
             }
+            pixelColor = Matrix::vadd(pixelColor, r.mColor); // TEMP: Grab whatever color the ray is, I have no skybox
             if (collision == object::Primitive::Collision::ABSORBED)
             {
                 // If the ray is absorbed, we've found its color. Otherwise,
                 // it's black (don't need to add it, it's just adding 0).
-                pixelColor = Matrix::vadd(pixelColor, r.mColor);
+                // pixelColor = Matrix::vadd(pixelColor, r.mColor);
             }
         }
         pixelColor = Matrix::vscale(pixelColor, 1.0 / mAntiAliasingLevel); // Average our ray colors
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);
-        pixel[R] = (uint8_t)(pixelColor[R] * 256);
-        pixel[G] = (uint8_t)(pixelColor[G] * 256);
-        pixel[B] = (uint8_t)(pixelColor[B] * 256);
+        pixel[R] = (uint8_t)(pixelColor[R] * 255);
+        pixel[G] = (uint8_t)(pixelColor[G] * 255);
+        pixel[B] = (uint8_t)(pixelColor[B] * 255);
         mFbLock.unlock();
     }
 }
@@ -258,7 +259,7 @@ matrix_t Render::getImgPlanePixelMultiple(int y, int x)
         double dx = x + (rand() / ((double)RAND_MAX + 1));
         double dy = y + (rand() / ((double)RAND_MAX + 1));
         vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, dy));
-        ret[i++] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
+        ret[i] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
     }
     return ret;
 }
