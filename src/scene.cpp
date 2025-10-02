@@ -34,7 +34,7 @@ namespace object
     {
         // Reflect 1 ray with a Lambertian reflection
         incoming.mOrigin = intersection;
-        incoming.mDir = Matrix::vadd(normal, Matrix::vrand3());
+        incoming.mDir = Matrix::vnorm(Matrix::vadd(normal, Matrix::vrand3()));
         return true;
     }
 
@@ -88,6 +88,12 @@ namespace object
         }
 
         double t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
+        if (CLOSE_TO(t, 0.0))
+        {
+            // Don't collide with an object we just collided with
+            return Collision::MISSED;
+        }
+
         vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
 
         // Split triangle into subtriangles, calculate normals
@@ -164,6 +170,11 @@ namespace object
             if (t < 0)
             {
                 // Don't hit things behind us
+                return Collision::MISSED;
+            }
+            else if (CLOSE_TO(t, 0.0))
+            {
+                // Don't collide with an object we just collided with
                 return Collision::MISSED;
             }
         }
