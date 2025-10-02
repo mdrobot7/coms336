@@ -16,13 +16,7 @@ namespace object
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json json) { (void)json; }
 
-    enum Primitive::Collision Primitive::collide(Ray &incoming)
-    {
-        (void)incoming;
-        return Collision::MISSED;
-    }
-
-    bool Primitive::specular(Ray &incoming, vector_t intersection, vector_t normal)
+    bool Primitive::specular(Ray &incoming, vector_t intersection, vector_t normal) const
     {
         static const double fuzziness = 0.0; // TODO: Potentially use later
 
@@ -36,7 +30,7 @@ namespace object
         return (Matrix::dot(incoming.mDir, normal) < 0.0);
     }
 
-    bool Primitive::diffuse(Ray &incoming, vector_t intersection, vector_t normal)
+    bool Primitive::diffuse(Ray &incoming, vector_t intersection, vector_t normal) const
     {
         // Reflect 1 ray with a Lambertian reflection
         incoming.mOrigin = intersection;
@@ -44,7 +38,7 @@ namespace object
         return true;
     }
 
-    bool Primitive::dielectric(Ray &incoming)
+    bool Primitive::dielectric(Ray &incoming) const
     {
         // TODO
         return false;
@@ -83,7 +77,7 @@ namespace object
         mNormal = Matrix::vnorm(mNormal);
     }
 
-    enum Primitive::Collision Triangle::collide(Ray &incoming)
+    enum Primitive::Collision Triangle::collide(Ray &incoming) const
     {
         // Check ray-plane intersection
         double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
@@ -148,7 +142,7 @@ namespace object
         mColor = Color::intToColor(color);
     }
 
-    enum Primitive::Collision Sphere::collide(Ray &incoming)
+    enum Primitive::Collision Sphere::collide(Ray &incoming) const
     {
         // The math for this is really complicated, it's basically
         // solving a quadratic equation. See Ray Tracing in One Weekend
@@ -218,6 +212,11 @@ namespace object
                           json["scale"]["z"]};
     }
 
+    enum Primitive::Collision Model::collide(Ray &incoming) const
+    {
+        return Collision::ABSORBED;
+    }
+
     Camera::Camera() {}
 
     Camera::Camera(vector_t origin, vector_t front, vector_t top, double focalLength)
@@ -277,7 +276,7 @@ void Scene::load(std::string sceneJsonPath)
             }
             if (fileIndex != mObjFilenames.size())
             {
-                mPrimitives.push_back(object::Model(i, mObjReaders[fileIndex]));
+                mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders[fileIndex]));
             }
             else
             {
@@ -288,16 +287,16 @@ void Scene::load(std::string sceneJsonPath)
                     f.close();
                     throw std::invalid_argument("OBJ file parse failed");
                 }
-                mPrimitives.push_back(object::Model(i, mObjReaders.back()));
+                mPrimitives.push_back(std::make_unique<object::Model>(i, mObjReaders.back()));
             }
         }
         else if (i["type"] == "sphere")
         {
-            mPrimitives.push_back(object::Sphere(i));
+            mPrimitives.push_back(std::make_unique<object::Sphere>(i));
         }
         else if (i["type"] == "triangle")
         {
-            mPrimitives.push_back(object::Triangle(i));
+            mPrimitives.push_back(std::make_unique<object::Triangle>(i));
         }
         else
         {

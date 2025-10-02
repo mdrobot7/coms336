@@ -23,13 +23,15 @@ namespace object
         Primitive();
         Primitive(nlohmann::json json);
 
+        virtual ~Primitive() {};
+
         /**
          * @brief Collide a ray with this object.
          *
          * @param incoming Incoming ray
          * @return enum Collision Type of collision that occurred
          */
-        enum Collision collide(Ray &incoming);
+        virtual enum Collision collide(Ray &incoming) const = 0;
 
         // Ray collision helpers (common to all object types)
 
@@ -42,7 +44,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool specular(Ray &incoming, vector_t intersection, vector_t normal);
+        bool specular(Ray &incoming, vector_t intersection, vector_t normal) const;
 
         /**
          * @brief Handle a diffuse reflection.
@@ -53,7 +55,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool diffuse(Ray &incoming, vector_t intersection, vector_t normal);
+        bool diffuse(Ray &incoming, vector_t intersection, vector_t normal) const;
 
         /**
          * @brief Handle a dielectric reflection/refraction.
@@ -62,7 +64,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool dielectric(Ray &incoming);
+        bool dielectric(Ray &incoming) const;
     };
 
     /**
@@ -82,7 +84,7 @@ namespace object
         Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color);
         Triangle(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming);
+        enum Collision collide(Ray &incoming) const override;
     };
 
     /**
@@ -101,7 +103,7 @@ namespace object
         Sphere(vector_t origin, double radius, enum Color::Surface surface, color_t color);
         Sphere(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming);
+        enum Collision collide(Ray &incoming) const override;
     };
 
     class Model : public Primitive
@@ -117,7 +119,7 @@ namespace object
         Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
         Model(nlohmann::json json, tinyobj::ObjReader obj);
 
-        enum Collision collide(Ray &incoming);
+        enum Collision collide(Ray &incoming) const override;
     };
 
     class Camera
@@ -139,8 +141,8 @@ class Scene
 public:
     object::Camera mCamera;
 
-    // List of scene objects
-    std::vector<object::Primitive> mPrimitives;
+    // List of scene objects. Must be unique_ptr otherwise polymorphism breaks
+    std::vector<std::unique_ptr<object::Primitive>> mPrimitives;
 
     // List of OBJ files, containing their assets
     std::vector<tinyobj::ObjReader> mObjReaders;
