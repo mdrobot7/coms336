@@ -3,7 +3,7 @@
         "_comment": "Camera is straight up and down pointing into the page. 1 unit = 1 pixel on the image plane, so focal length must be huge.",
         "origin": {
             "x": 0,
-            "y": 0,
+            "y": 100,
             "z": 384
         },
         "front": {
@@ -49,6 +49,49 @@
             ],
             "surface": "diffuse",
             "color": "0x00FF00"
+        },
+        {
+            "type": "triangle",
+            "vertices": [
+                {
+                    "x": 1,
+                    "y": 0,
+                    "z": -0
+                },
+                {
+                    "x": -0,
+                    "y": 1,
+                    "z": -0
+                },
+                {
+                    "x": 0,
+                    "y": -0,
+                    "z": -1
+                }
+            ],
+            "surface": "diffuse",
+            "indexOfRefraction": 1.333,
+            "color": "0x00FF00"
+        },
+        {
+            "type": "quad",
+            "origin": {
+                "x": 0,
+                "y": 0,
+                "z": -100
+            },
+            "width": {
+                "x": 400,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 400,
+                "z": 0
+            },
+            "surface": "diffuse",
+            "color": "0x0000FF"
         },
         {
             "type": "triangle",
