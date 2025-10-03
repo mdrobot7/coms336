@@ -233,6 +233,91 @@ namespace object
         throw std::invalid_argument("Sphere collision error");
     }
 
+    Quad::Quad(vector_t origin, vector_t width, vector_t height, enum Color::Surface surface, double indexOfRefraction, color_t color)
+    {
+        mOrigin = origin;
+        mWidth = width;
+        mHeight = height;
+        mSurface = surface;
+        mIndexOfRefraction = indexOfRefraction;
+        mColor = color;
+
+        vector_t widthCrossHeight = Matrix::cross3(mWidth, mHeight);
+        mNormal = Matrix::vnorm(widthCrossHeight);
+        mW = Matrix::vscale(widthCrossHeight, 1.0 / Matrix::dot(widthCrossHeight, widthCrossHeight));
+    }
+
+    Quad::Quad(nlohmann::json json)
+    {
+        mOrigin = vector_t{json["origin"]["x"],
+                           json["origin"]["y"],
+                           json["origin"]["z"]};
+        mWidth = vector_t{json["width"]["x"],
+                          json["width"]["y"],
+                          json["width"]["z"]};
+        mHeight = vector_t{json["height"]["x"],
+                           json["height"]["y"],
+                           json["height"]["z"]};
+        mSurface = Color::stringToSurface(json["surface"]);
+        if (mSurface == Color::Surface::DIELECTRIC)
+        {
+            mIndexOfRefraction = json["indexOfRefraction"];
+        }
+        int color = std::stoi((std::string)(json["color"]), 0, 16);
+        mColor = Color::intToColor(color);
+
+        vector_t widthCrossHeight = Matrix::cross3(mWidth, mHeight);
+        mNormal = Matrix::vnorm(widthCrossHeight);
+        mW = Matrix::vscale(widthCrossHeight, 1.0 / Matrix::dot(widthCrossHeight, widthCrossHeight));
+    }
+
+    enum Primitive::Collision Quad::collide(Ray &incoming) const
+    {
+        // Check ray-plane intersection
+        double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
+        if (CLOSE_TO(dirDotNorm, 0.0))
+        {
+            // Incoming is parallel
+            return Collision::MISSED;
+        }
+
+        double t = Matrix::dot(Matrix::vsub(mOrigin, incoming.mOrigin), mNormal) / dirDotNorm;
+        if (CLOSE_TO(t, 0.0))
+        {
+            // Don't collide with an object we just collided with
+            return Collision::MISSED;
+        }
+
+        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
+        vector_t planarIntersection = Matrix::vsub(intersection, mOrigin);
+        double alpha = Matrix::dot(mW, Matrix::cross3(planarIntersection, mHeight));
+        double beta = Matrix::dot(mW, Matrix::cross3(mWidth, planarIntersection));
+
+        // planarIntersection = alpha * mWidth + beta * mHeight.
+        // If alpha and beta are [0.0, 1.0], then the intersection is inside the quad.
+        if (!IN_RANGE(alpha, 0.0, 1.0) || !IN_RANGE(beta, 0.0, 1.0))
+        {
+            return Collision::MISSED;
+        }
+
+        // Bounce it
+        switch (mSurface)
+        {
+        case Color::SPECULAR:
+            return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::DIFFUSE:
+            incoming.addCollision(mColor);
+            return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::DIELECTRIC:
+            incoming.addCollision(mColor);
+            return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::EMISSIVE:
+            incoming.addCollision(mColor);
+            return Collision::ABSORBED; // Emissive surfaces never reflect
+        }
+        throw std::invalid_argument("Quad collision error");
+    }
+
     Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)
     {
         mOrigin = origin;
@@ -342,6 +427,10 @@ void Scene::load(std::string sceneJsonPath)
         else if (i["type"] == "triangle")
         {
             mPrimitives.push_back(std::make_unique<object::Triangle>(i));
+        }
+        else if (i["type"] == "quad")
+        {
+            mPrimitives.push_back(std::make_unique<object::Quad>(i));
         }
         else
         {

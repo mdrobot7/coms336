@@ -110,6 +110,25 @@ namespace object
         enum Collision collide(Ray &incoming) const override;
     };
 
+    class Quad : public Primitive
+    {
+    public:
+        vector_t mOrigin;
+        vector_t mWidth, mHeight;
+        vector_t mNormal;
+        enum Color::Surface mSurface;
+        color_t mColor;
+        double mIndexOfRefraction;
+
+        Quad(vector_t origin, vector_t width, vector_t height, enum Color::Surface surface, double indexOfRefraction, color_t color);
+        Quad(nlohmann::json json);
+
+        enum Collision collide(Ray &incoming) const override;
+
+    private:
+        vector_t mW; // Used for intersection checking
+    };
+
     class Model : public Primitive
     {
     public:
