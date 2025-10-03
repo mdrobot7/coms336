@@ -1,52 +1,53 @@
 {
     "camera": {
+        "_comment": "Camera is straight up and down pointing into the page. 1 unit = 1 pixel on the image plane, so focal length must be huge.",
         "origin": {
             "x": 0,
             "y": 0,
-            "z": 0
+            "z": 384
         },
         "front": {
-            "x": 1,
+            "x": 0,
             "y": 0,
-            "z": 0
+            "z": -1
         },
         "top": {
-            "x": 1,
+            "x": 0,
             "y": 1,
             "z": 0
         },
-        "focalLength": 5
+        "focalLength": 384
     },
     "objects": [
         {
             "type": "sphere",
-            "x": 1,
-            "y": 1,
-            "z": 1,
-            "radius": 1,
-            "surface": "diffuse",
+            "x": 0,
+            "y": 0,
+            "z": -300,
+            "radius": 100,
+            "surface": "specular",
             "color": "0xFF0000"
         },
         {
             "type": "triangle",
             "vertices": [
                 {
-                    "x": 5,
-                    "y": 5,
-                    "z": 5
+                    "x": 400,
+                    "y": 400,
+                    "z": -400
                 },
                 {
-                    "x": 10,
-                    "y": 11,
-                    "z": 15
+                    "x": -400,
+                    "y": 400,
+                    "z": -400
                 },
                 {
-                    "x": 7,
-                    "y": -2,
-                    "z": 3
+                    "x": 400,
+                    "y": -400,
+                    "z": -400
                 }
             ],
-            "surface": "specular",
+            "surface": "diffuse",
             "color": "0x00FF00"
         },
         {
