@@ -10,6 +10,8 @@ public:
 
     color_t mColor;
 
+    double mIndexOfRefraction; // Index of refraction of the material we're currently in
+
     Ray();
     Ray(vector_t origin, vector_t dir);
 

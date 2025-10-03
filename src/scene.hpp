@@ -20,6 +20,8 @@ namespace object
             MISSED,
         };
 
+        static constexpr double sRefractionGlass = 1.458;
+
         Primitive();
         Primitive(nlohmann::json json);
 
@@ -64,7 +66,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool dielectric(Ray &incoming) const;
+        bool dielectric(Ray &incoming, vector_t intersection, vector_t normal, double indexOfRefraction) const;
     };
 
     /**
@@ -79,9 +81,10 @@ namespace object
         matrix_t mVertices; // Vertices are row vectors
         vector_t mNormal;   // Normal vector, determined by winding order of vertices
         enum Color::Surface mSurface;
+        double mIndexOfRefraction;
         color_t mColor;
 
-        Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color);
+        Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, double indexOfRefraction, color_t color);
         Triangle(nlohmann::json json);
 
         enum Collision collide(Ray &incoming) const override;
@@ -98,9 +101,10 @@ namespace object
         vector_t mOrigin;
         double mRadius;
         enum Color::Surface mSurface;
+        double mIndexOfRefraction;
         color_t mColor;
 
-        Sphere(vector_t origin, double radius, enum Color::Surface surface, color_t color);
+        Sphere(vector_t origin, double radius, enum Color::Surface surface, double indexOfRefraction, color_t color);
         Sphere(nlohmann::json json);
 
         enum Collision collide(Ray &incoming) const override;

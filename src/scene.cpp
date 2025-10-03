@@ -38,19 +38,44 @@ namespace object
         return true;
     }
 
-    bool Primitive::dielectric(Ray &incoming) const
+    bool Primitive::dielectric(Ray &incoming, vector_t intersection, vector_t normal, double indexOfRefraction) const
     {
-        // TODO
-        return false;
+        // Determine if we have total internal reflection
+        double etaOverEtaPrime = indexOfRefraction / incoming.mIndexOfRefraction;
+        double cosTheta = Matrix::dot(Matrix::vscale(incoming.mDir, -1.0), normal);
+        double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+        // Schlick's approximation
+        double temp = (1.0 - etaOverEtaPrime) / (1.0 + etaOverEtaPrime);
+        temp = temp * temp;
+        double schlick = temp + (1.0 - temp) * pow(1.0 - cosTheta, 5.0);
+        double random = rand() / ((double)RAND_MAX + 1.0);
+
+        if ((etaOverEtaPrime * sinTheta > 1.0) || (schlick > random))
+        {
+            // No solution for Snell's law, must reflect
+            return specular(incoming, intersection, normal);
+        }
+
+        // See raytracing in one weekend. Complex math based on Snell's law.
+        vector_t rOutPerp = Matrix::vscale(Matrix::vadd(incoming.mDir, Matrix::vscale(normal, cosTheta)), etaOverEtaPrime);
+        vector_t rOutParallel = Matrix::vscale(normal, -sqrt(fabs(1.0 - Matrix::dot(rOutPerp, rOutPerp))));
+
+        incoming.mDir = Matrix::vnorm(Matrix::vadd(rOutPerp, rOutParallel));
+        incoming.mOrigin = intersection;
+        incoming.mIndexOfRefraction = indexOfRefraction;
+
+        return true;
     }
 
-    Triangle::Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, color_t color)
+    Triangle::Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, double indexOfRefraction, color_t color)
     {
         mVertices = matrix_t(3);
         mVertices[0] = v0;
         mVertices[1] = v1;
         mVertices[2] = v2;
         mSurface = surface;
+        mIndexOfRefraction = indexOfRefraction;
         mColor = color;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
@@ -69,6 +94,10 @@ namespace object
         }
 
         mSurface = Color::stringToSurface(json["surface"]);
+        if (mSurface == Color::Surface::DIELECTRIC)
+        {
+            mIndexOfRefraction = json["indexOfRefraction"];
+        }
         int color = std::stoi((std::string)(json["color"]), 0, 16);
         mColor = Color::intToColor(color);
 
@@ -121,7 +150,7 @@ namespace object
             return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
-            return (dielectric(incoming) ? Collision::REFLECTED : Collision::ABSORBED);
+            return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             incoming.addCollision(mColor);
             return Collision::ABSORBED; // Emissive surfaces never reflect
@@ -129,11 +158,12 @@ namespace object
         throw std::invalid_argument("Triangle collision error");
     }
 
-    Sphere::Sphere(vector_t center, double radius, enum Color::Surface surface, color_t color)
+    Sphere::Sphere(vector_t center, double radius, enum Color::Surface surface, double indexOfRefraction, color_t color)
     {
         mOrigin = center;
         mRadius = radius;
         mSurface = surface;
+        mIndexOfRefraction = indexOfRefraction;
         mColor = color;
     }
 
@@ -144,6 +174,10 @@ namespace object
                            json["z"]};
         mRadius = json["radius"];
         mSurface = Color::stringToSurface(json["surface"]);
+        if (mSurface == Color::Surface::DIELECTRIC)
+        {
+            mIndexOfRefraction = json["indexOfRefraction"];
+        }
         int color = std::stoi((std::string)(json["color"]), 0, 16);
         mColor = Color::intToColor(color);
     }
@@ -191,7 +225,7 @@ namespace object
             return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
             incoming.addCollision(mColor);
-            return (dielectric(incoming) ? Collision::REFLECTED : Collision::ABSORBED);
+            return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             incoming.addCollision(mColor);
             return Collision::ABSORBED; // Emissive surfaces never reflect
