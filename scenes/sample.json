@@ -3,8 +3,8 @@
         "_comment": "Camera is straight up and down pointing into the page. 1 unit = 1 pixel on the image plane, so focal length must be huge.",
         "origin": {
             "x": 0,
-            "y": 100,
-            "z": 384
+            "y": 384,
+            "z": 500
         },
         "front": {
             "x": 0,
@@ -16,104 +16,185 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 384
+        "focalLength": 500
     },
+    "_comment": "Scene: A red sphere, a mirrored sphere, a glass sphere, and a green triangle in a room with red, blue, and white illuminated walls",
     "objects": [
         {
-            "type": "sphere",
-            "x": 0,
-            "y": 0,
-            "z": -300,
-            "radius": 100,
-            "surface": "specular",
-            "color": "0xFF0000"
-        },
-        {
-            "type": "triangle",
-            "vertices": [
-                {
-                    "x": 400,
-                    "y": 400,
-                    "z": -400
-                },
-                {
-                    "x": -400,
-                    "y": 400,
-                    "z": -400
-                },
-                {
-                    "x": 400,
-                    "y": -400,
-                    "z": -400
-                }
-            ],
-            "surface": "diffuse",
-            "color": "0x00FF00"
-        },
-        {
-            "type": "triangle",
-            "vertices": [
-                {
-                    "x": 1,
-                    "y": 0,
-                    "z": -0
-                },
-                {
-                    "x": -0,
-                    "y": 1,
-                    "z": -0
-                },
-                {
-                    "x": 0,
-                    "y": -0,
-                    "z": -1
-                }
-            ],
-            "surface": "diffuse",
-            "indexOfRefraction": 1.333,
-            "color": "0x00FF00"
-        },
-        {
+            "_comment": "floor",
             "type": "quad",
             "origin": {
-                "x": 0,
+                "x": -1000,
                 "y": 0,
-                "z": -100
+                "z": 0
             },
             "width": {
-                "x": 400,
+                "x": 2000,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
-                "y": 400,
+                "y": 0,
+                "z": -1000
+            },
+            "surface": "diffuse",
+            "color": "0x7D7D7D"
+        },
+        {
+            "_comment": "left wall",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 0,
+                "z": 0
+            },
+            "width": {
+                "x": 0,
+                "y": 0,
+                "z": -1000
+            },
+            "height": {
+                "x": 0,
+                "y": 1000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "color": "0xFF0000"
+        },
+        {
+            "_comment": "back wall",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 0,
+                "z": -1000
+            },
+            "width": {
+                "x": 2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 1000,
                 "z": 0
             },
             "surface": "diffuse",
+            "color": "0xC9C9C9"
+        },
+        {
+            "_comment": "right wall",
+            "type": "quad",
+            "origin": {
+                "x": 1000,
+                "y": 0,
+                "z": -1000
+            },
+            "width": {
+                "x": 0,
+                "y": 0,
+                "z": 1000
+            },
+            "height": {
+                "x": 0,
+                "y": 1000,
+                "z": 0
+            },
+            "surface": "emissive",
             "color": "0x0000FF"
+        },
+        {
+            "_comment": "ceiling",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 1000,
+                "z": 0
+            },
+            "width": {
+                "x": 2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 0,
+                "z": -1000
+            },
+            "surface": "emissive",
+            "color": "0xFFFFFF"
+        },
+        {
+            "_comment": "backlight",
+            "type": "quad",
+            "origin": {
+                "x": -10000,
+                "y": -10000,
+                "z": 600
+            },
+            "width": {
+                "x": 20000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 20000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "color": "0xFFFFFF"
+        },
+        {
+            "type": "sphere",
+            "x": 0,
+            "y": 100,
+            "z": -300,
+            "radius": 100,
+            "surface": "diffuse",
+            "color": "0xFF0000"
+        },
+        {
+            "type": "sphere",
+            "x": -500,
+            "y": 350,
+            "z": -500,
+            "radius": 300,
+            "surface": "specular",
+            "color": "0x000000"
+        },
+        {
+            "type": "sphere",
+            "x": 500,
+            "y": 300,
+            "z": -500,
+            "radius": 250,
+            "surface": "dielectric",
+            "color": "0x000000",
+            "indexOfRefraction": 1.458
         },
         {
             "type": "triangle",
             "vertices": [
                 {
-                    "x": 19,
-                    "y": 19,
-                    "z": 19
+                    "x": 700,
+                    "y": 500,
+                    "z": -100
                 },
                 {
-                    "x": 20,
-                    "y": 20,
-                    "z": 20
+                    "x": 700,
+                    "y": 700,
+                    "z": -100
                 },
                 {
-                    "x": 21,
-                    "y": 21,
-                    "z": 21
+                    "x": 600,
+                    "y": 400,
+                    "z": -600
                 }
             ],
-            "surface": "emissive",
-            "color": "0xFFFFFF"
+            "surface": "diffuse",
+            "color": "0x00FF00"
         }
     ]
 }

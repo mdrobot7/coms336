@@ -78,7 +78,10 @@ std::vector<double> Matrix::vnorm(std::vector<double> a)
 
 std::vector<double> Matrix::vrand3()
 {
-    return Matrix::vnorm(std::vector<double>{(double)rand(), (double)rand(), (double)rand()});
+    return Matrix::vnorm(std::vector<double>{
+        (double)(rand() - RAND_MAX / 2),
+        (double)(rand() - RAND_MAX / 2),
+        (double)(rand() - RAND_MAX / 2)});
 }
 
 std::vector<std::vector<double>> Matrix::madd(std::vector<std::vector<double>> a, std::vector<std::vector<double>> b)
