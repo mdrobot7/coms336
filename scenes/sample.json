@@ -4,7 +4,7 @@
         "origin": {
             "x": 0,
             "y": 384,
-            "z": 500
+            "z": 384
         },
         "front": {
             "x": 0,
@@ -16,9 +16,8 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 500
+        "focalLength": 384
     },
-    "_comment": "Scene: A red sphere, a mirrored sphere, a glass sphere, and a green triangle in a room with red, blue, and white illuminated walls",
     "objects": [
         {
             "_comment": "floor",
@@ -89,12 +88,12 @@
             "origin": {
                 "x": 1000,
                 "y": 0,
-                "z": -1000
+                "z": 0
             },
             "width": {
                 "x": 0,
                 "y": 0,
-                "z": 1000
+                "z": -1000
             },
             "height": {
                 "x": 0,
@@ -149,7 +148,7 @@
         {
             "type": "sphere",
             "x": 0,
-            "y": 100,
+            "y": 150,
             "z": -300,
             "radius": 100,
             "surface": "diffuse",
@@ -158,9 +157,9 @@
         {
             "type": "sphere",
             "x": -500,
-            "y": 350,
-            "z": -500,
-            "radius": 300,
+            "y": 300,
+            "z": -400,
+            "radius": 200,
             "surface": "specular",
             "color": "0x000000"
         },
@@ -171,26 +170,26 @@
             "z": -500,
             "radius": 250,
             "surface": "dielectric",
-            "color": "0x000000",
+            "color": "0xFFFFFF",
             "indexOfRefraction": 1.458
         },
         {
             "type": "triangle",
             "vertices": [
                 {
-                    "x": 700,
-                    "y": 500,
-                    "z": -100
-                },
-                {
-                    "x": 700,
-                    "y": 700,
-                    "z": -100
-                },
-                {
-                    "x": 600,
+                    "x": 400,
                     "y": 400,
-                    "z": -600
+                    "z": -800
+                },
+                {
+                    "x": -400,
+                    "y": 400,
+                    "z": -800
+                },
+                {
+                    "x": 0,
+                    "y": 700,
+                    "z": -800
                 }
             ],
             "surface": "diffuse",
