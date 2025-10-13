@@ -31,9 +31,11 @@ namespace object
          * @brief Collide a ray with this object.
          *
          * @param incoming Incoming ray
+         * @param t Time t of collision with the object. Always > 0.
+         * @param color Color of the object at the collision point.
          * @return enum Collision Type of collision that occurred
          */
-        virtual enum Collision collide(Ray &incoming) const = 0;
+        virtual enum Collision collide(Ray &incoming, double &t, color_t &color) const = 0;
 
         // Ray collision helpers (common to all object types)
 
@@ -87,7 +89,7 @@ namespace object
         Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, double indexOfRefraction, color_t color);
         Triangle(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming) const override;
+        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
     };
 
     /**
@@ -107,7 +109,7 @@ namespace object
         Sphere(vector_t origin, double radius, enum Color::Surface surface, double indexOfRefraction, color_t color);
         Sphere(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming) const override;
+        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
     };
 
     class Quad : public Primitive
@@ -123,7 +125,7 @@ namespace object
         Quad(vector_t origin, vector_t width, vector_t height, enum Color::Surface surface, double indexOfRefraction, color_t color);
         Quad(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming) const override;
+        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
 
     private:
         vector_t mW; // Used for intersection checking
@@ -142,7 +144,7 @@ namespace object
         Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
         Model(nlohmann::json json, tinyobj::ObjReader obj);
 
-        enum Collision collide(Ray &incoming) const override;
+        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
     };
 
     class Camera

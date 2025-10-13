@@ -27,7 +27,7 @@ namespace object
         // Add fuzziness. If the fuzzy vector is shot inside the object,
         // the object just absorbs it and the ray stops.
         incoming.mDir = Matrix::vadd(incoming.mDir, Matrix::vscale(Matrix::vrand3(), fuzziness));
-        return (Matrix::dot(incoming.mDir, normal) < 0.0);
+        return (Matrix::dot(incoming.mDir, normal) > 0.0);
     }
 
     bool Primitive::diffuse(Ray &incoming, vector_t intersection, vector_t normal) const
@@ -40,25 +40,29 @@ namespace object
 
     bool Primitive::dielectric(Ray &incoming, vector_t intersection, vector_t normal, double indexOfRefraction) const
     {
+        // Check whether we're coming in or out of an object.
+        // Normal and incoming vector will be opposite each other.
+        bool outsideObject = Matrix::dot(incoming.mDir, normal) < 0.0;
+
         // Determine if we have total internal reflection
-        double etaOverEtaPrime = indexOfRefraction / incoming.mIndexOfRefraction;
-        double cosTheta = Matrix::dot(Matrix::vscale(incoming.mDir, -1.0), normal);
+        double refractionIndex = outsideObject ? 1.0 / indexOfRefraction : indexOfRefraction;
+        double cosTheta = std::fmin(Matrix::dot(Matrix::vscale(incoming.mDir, -1.0), normal), 1.0);
         double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
         // Schlick's approximation
-        double temp = (1.0 - etaOverEtaPrime) / (1.0 + etaOverEtaPrime);
+        double temp = (1.0 - refractionIndex) / (1.0 + refractionIndex);
         temp = temp * temp;
         double schlick = temp + (1.0 - temp) * pow(1.0 - cosTheta, 5.0);
         double random = rand() / ((double)RAND_MAX + 1.0);
 
-        if ((etaOverEtaPrime * sinTheta > 1.0) || (schlick > random))
+        if ((refractionIndex * sinTheta > 1.0) || (schlick > random))
         {
             // No solution for Snell's law, must reflect
             return specular(incoming, intersection, normal);
         }
 
         // See raytracing in one weekend. Complex math based on Snell's law.
-        vector_t rOutPerp = Matrix::vscale(Matrix::vadd(incoming.mDir, Matrix::vscale(normal, cosTheta)), etaOverEtaPrime);
+        vector_t rOutPerp = Matrix::vscale(Matrix::vadd(incoming.mDir, Matrix::vscale(normal, cosTheta)), refractionIndex);
         vector_t rOutParallel = Matrix::vscale(normal, -sqrt(fabs(1.0 - Matrix::dot(rOutPerp, rOutPerp))));
 
         incoming.mDir = Matrix::vnorm(Matrix::vadd(rOutPerp, rOutParallel));
@@ -106,7 +110,7 @@ namespace object
         mNormal = Matrix::vnorm(mNormal);
     }
 
-    enum Primitive::Collision Triangle::collide(Ray &incoming) const
+    enum Primitive::Collision Triangle::collide(Ray &incoming, double &t, color_t &color) const
     {
         // Check ray-plane intersection
         double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
@@ -116,8 +120,13 @@ namespace object
             return Collision::MISSED;
         }
 
-        double t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
-        if (CLOSE_TO(t, 0.0))
+        t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
+        if (t < 0)
+        {
+            // Don't hit things behind us
+            return Collision::MISSED;
+        }
+        else if (CLOSE_TO(t, 0.0))
         {
             // Don't collide with an object we just collided with
             return Collision::MISSED;
@@ -144,15 +153,16 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
+            color = color_t{1, 1, 1};
             return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            incoming.addCollision(mColor);
+            color = mColor;
             return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Triangle collision error");
@@ -182,7 +192,7 @@ namespace object
         mColor = Color::intToColor(color);
     }
 
-    enum Primitive::Collision Sphere::collide(Ray &incoming) const
+    enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, color_t &color) const
     {
         // The math for this is really complicated, it's basically
         // solving a quadratic equation. See Ray Tracing in One Weekend
@@ -191,7 +201,6 @@ namespace object
         double b = -2.0 * Matrix::dot(incoming.mDir, centerMinusIncoming);
         double c = Matrix::dot(centerMinusIncoming, centerMinusIncoming) - mRadius * mRadius;
         double discriminant = b * b - 4.0 * a * c;
-        double t = 0;
         if (discriminant < 0)
         {
             // No intersection
@@ -201,6 +210,15 @@ namespace object
         {
             // Take the negative of the +/-, we want the smaller t (closer point)
             t = (-b - sqrt(discriminant)) / (2.0 * a);
+            if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(fabs(t), 0.0))
+            {
+                // Dielectrics change ray direction at the surface of
+                // the object. That leads to a lot of false Collision::MISSEDs
+                // because we're either really close or negative.
+                // Grab the further t.
+                t = (-b + sqrt(discriminant)) / (2.0 * a);
+            }
+
             if (t < 0)
             {
                 // Don't hit things behind us
@@ -213,21 +231,29 @@ namespace object
             }
         }
 
+        if (mSurface == Color::Surface::DIELECTRIC)
+        {
+            int foo = 0;
+            foo++;
+        }
+
         // Bounce it
         vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
         vector_t normal = Matrix::vscale(Matrix::vsub(intersection, mOrigin), 1.0 / mRadius);
         switch (mSurface)
         {
         case Color::SPECULAR:
+            color = color_t{1, 1, 1};
             return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            incoming.addCollision(mColor);
+            // color = mColor;
+            color = color_t{1, 1, 1};
             return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Sphere collision error");
@@ -271,7 +297,7 @@ namespace object
         mW = Matrix::vscale(widthCrossHeight, 1.0 / Matrix::dot(widthCrossHeight, widthCrossHeight));
     }
 
-    enum Primitive::Collision Quad::collide(Ray &incoming) const
+    enum Primitive::Collision Quad::collide(Ray &incoming, double &t, color_t &color) const
     {
         // Check ray-plane intersection
         double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
@@ -281,8 +307,13 @@ namespace object
             return Collision::MISSED;
         }
 
-        double t = Matrix::dot(Matrix::vsub(mOrigin, incoming.mOrigin), mNormal) / dirDotNorm;
-        if (CLOSE_TO(t, 0.0))
+        t = Matrix::dot(Matrix::vsub(mOrigin, incoming.mOrigin), mNormal) / dirDotNorm;
+        if (t < 0)
+        {
+            // Don't hit things behind us
+            return Collision::MISSED;
+        }
+        else if (CLOSE_TO(t, 0.0))
         {
             // Don't collide with an object we just collided with
             return Collision::MISSED;
@@ -304,15 +335,16 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
+            color = color_t{1, 1, 1};
             return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            incoming.addCollision(mColor);
+            color = mColor;
             return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
-            incoming.addCollision(mColor);
+            color = mColor;
             return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Quad collision error");
@@ -342,7 +374,7 @@ namespace object
                           json["scale"]["z"]};
     }
 
-    enum Primitive::Collision Model::collide(Ray &incoming) const
+    enum Primitive::Collision Model::collide(Ray &incoming, double &t, color_t &color) const
     {
         return Collision::ABSORBED;
     }
@@ -440,4 +472,9 @@ void Scene::load(std::string sceneJsonPath)
     }
 
     f.close();
+
+    if (mPrimitives.size() == 0)
+    {
+        throw std::invalid_argument("No objects in the scene");
+    }
 }

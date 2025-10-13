@@ -7,6 +7,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <limits>
 #include "render.hpp"
 #include "matrix.hpp"
 
@@ -175,24 +176,49 @@ void Render::renderPixel()
         for (Ray r : rays)
         {
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
-            object::Primitive::Collision collision = object::Primitive::Collision::REFLECTED;
-            for (int i = 0; i < mMaxBounces && collision == object::Primitive::Collision::REFLECTED; i++)
+            Ray baseRay = Ray(r);
+            for (int i = 0; i < mMaxBounces; i++)
             {
+                object::Primitive::Collision closestCollision = object::Primitive::Collision::MISSED;
+                double minT = std::numeric_limits<double>::infinity();
+                color_t closestColor;
+                Ray closestRay = Ray(baseRay);
+
                 for (const auto &p : mScene.mPrimitives)
                 {
-                    collision = p->collide(r);
-                    if (collision != object::Primitive::Collision::MISSED)
+                    // Check collision with every object, we need to find the *closest* collision
+                    double t;
+                    color_t color;
+                    Ray thisCollision = Ray(baseRay);
+                    object::Primitive::Collision collision = p->collide(thisCollision, t, color);
+                    if (collision != object::Primitive::Collision::MISSED && t < minT)
                     {
-                        break;
+                        minT = t;
+                        closestCollision = collision;
+                        closestColor = color;
+                        closestRay = Ray(thisCollision);
                     }
                 }
-            }
-            pixelColor = Matrix::vadd(pixelColor, r.mColor); // TEMP: Grab whatever color the ray is, I have no skybox
-            if (collision == object::Primitive::Collision::ABSORBED)
-            {
-                // If the ray is absorbed, we've found its color. Otherwise,
-                // it's black (don't need to add it, it's just adding 0).
-                // pixelColor = Matrix::vadd(pixelColor, r.mColor);
+
+                if (closestCollision == object::Primitive::Collision::REFLECTED)
+                {
+                    // We have more stuff to hit
+                    closestRay.addCollision(closestColor);
+                    baseRay = Ray(closestRay);
+                }
+                else if (closestCollision == object::Primitive::Collision::ABSORBED)
+                {
+                    // Ray was absorbed, we've found its final color
+                    closestRay.addCollision(closestColor);
+                    pixelColor = Matrix::vadd(pixelColor, closestRay.mColor);
+                    break;
+                }
+                else if (closestCollision == object::Primitive::Collision::MISSED)
+                {
+                    // Missed everything, meaning we never hit a light and
+                    // got absorbed. Give up and leave the pixel black
+                    break;
+                }
             }
         }
         pixelColor = Matrix::vscale(pixelColor, 1.0 / mAntiAliasingLevel); // Average our ray colors
