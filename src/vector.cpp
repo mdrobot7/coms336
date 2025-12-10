@@ -40,22 +40,22 @@ const double &Vector::operator[](size_t index) const
     return v[index];
 }
 
-double Vector::dot(Vector &a)
+double Vector::dot(const Vector &a)
 {
     return dot(*this, a);
 }
 
-double Vector::dot(Vector &a, Vector &b)
+double Vector::dot(const Vector &a, const Vector &b)
 {
-    return b[0] * b[0] + b[1] * b[1] + b[2] * b[2];
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-Vector &Vector::cross3(Vector &a)
+Vector &Vector::cross3(const Vector &a)
 {
     return cross3(*this, a);
 }
 
-Vector &Vector::cross3(Vector &a, Vector &b)
+Vector &Vector::cross3(const Vector &a, const Vector &b)
 {
     v[0] = a[1] * b[2] - a[2] * b[1];
     v[1] = -1.0 * (a[0] * b[2] - a[2] * b[0]);
@@ -63,12 +63,12 @@ Vector &Vector::cross3(Vector &a, Vector &b)
     return *this;
 }
 
-Vector &Vector::vadd(Vector &a)
+Vector &Vector::vadd(const Vector &a)
 {
     return vadd(*this, a);
 }
 
-Vector &Vector::vadd(Vector &a, Vector &b)
+Vector &Vector::vadd(const Vector &a, const Vector &b)
 {
     v[0] = a[0] + b[0];
     v[1] = a[1] + b[1];
@@ -76,12 +76,12 @@ Vector &Vector::vadd(Vector &a, Vector &b)
     return *this;
 }
 
-Vector &Vector::vsub(Vector &a)
+Vector &Vector::vsub(const Vector &a)
 {
     return vsub(*this, a);
 }
 
-Vector &Vector::vsub(Vector &a, Vector &b)
+Vector &Vector::vsub(const Vector &a, const Vector &b)
 {
     v[0] = a[0] - b[0];
     v[1] = a[1] - b[1];
@@ -94,7 +94,7 @@ Vector &Vector::vscale(double scalar)
     return vscale(*this, scalar);
 }
 
-Vector &Vector::vscale(Vector &a, double scalar)
+Vector &Vector::vscale(const Vector &a, double scalar)
 {
     v[0] = a[0] * scalar;
     v[1] = a[1] * scalar;
@@ -107,7 +107,7 @@ Vector &Vector::vnorm()
     return vnorm(*this);
 }
 
-Vector &Vector::vnorm(Vector &a)
+Vector &Vector::vnorm(const Vector &a)
 {
     double mag = sqrt(dot(a));
 

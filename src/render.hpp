@@ -11,7 +11,7 @@
 class Render
 {
 public:
-    Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
+    Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
     ~Render();
 
     /**
@@ -32,7 +32,7 @@ public:
     int save(std::string filename);
 
 private:
-    const Scene &mScene;
+    Scene &mScene;
 
     int mWidth, mHeight, mAntiAliasingLevel;
     uint8_t *mFb;

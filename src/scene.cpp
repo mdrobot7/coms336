@@ -82,7 +82,6 @@ namespace object
         mColor = color;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
-        Vector v10, v21 = Vector();
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
         mNormal.vnorm();
     }

@@ -32,16 +32,16 @@ public:
     /**
      * @brief 3-dimensional dot product of two vectors
      */
-    double dot(Vector &a);
-    static double dot(Vector &a, Vector &b);
+    double dot(const Vector &a);
+    static double dot(const Vector &a, const Vector &b);
 
     /**
      * @brief 3-dimensional cross product of two vectors.
      * Performs this x a.
      */
-    Vector &cross3(Vector &a);
-    Vector &cross3(Vector &a, Vector &b);
-    static inline Vector scross3(Vector &a, Vector &b)
+    Vector &cross3(const Vector &a);
+    Vector &cross3(const Vector &a, const Vector &b);
+    static inline Vector scross3(const Vector &a, const Vector &b)
     {
         Vector v;
         return v.cross3(a, b);
@@ -50,9 +50,9 @@ public:
     /**
      * @brief 3-dimensional vector add
      */
-    Vector &vadd(Vector &a);
-    Vector &vadd(Vector &a, Vector &b);
-    static inline Vector svadd(Vector &a, Vector &b)
+    Vector &vadd(const Vector &a);
+    Vector &vadd(const Vector &a, const Vector &b);
+    static inline Vector svadd(const Vector &a, const Vector &b)
     {
         Vector v;
         return v.vadd(a, b);
@@ -62,9 +62,9 @@ public:
      * @brief 3-dimensional vector subtract.
      * Performs this - a.
      */
-    Vector &vsub(Vector &a);
-    Vector &vsub(Vector &a, Vector &b);
-    static inline Vector svsub(Vector &a, Vector &b)
+    Vector &vsub(const Vector &a);
+    Vector &vsub(const Vector &a, const Vector &b);
+    static inline Vector svsub(const Vector &a, const Vector &b)
     {
         Vector v;
         return v.vsub(a, b);
@@ -74,8 +74,8 @@ public:
      * @brief 3-dimensional vector multiply with a scalar
      */
     Vector &vscale(double scalar);
-    Vector &vscale(Vector &a, double scalar);
-    static inline Vector svscale(Vector &a, double scalar)
+    Vector &vscale(const Vector &a, double scalar);
+    static inline Vector svscale(const Vector &a, double scalar)
     {
         Vector v;
         return v.vscale(a, scalar);
@@ -86,8 +86,8 @@ public:
      * the 0 vector returns the 0 vector.
      */
     Vector &vnorm();
-    Vector &vnorm(Vector &a);
-    static inline Vector svnorm(Vector &a)
+    Vector &vnorm(const Vector &a);
+    static inline Vector svnorm(const Vector &a)
     {
         Vector v;
         return v.vnorm(a);

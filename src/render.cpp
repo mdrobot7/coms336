@@ -16,7 +16,7 @@
 #define G (1)
 #define B (2)
 
-Render::Render(const Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene)
+Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene)
 {
     mWidth = width;
     mHeight = height;
