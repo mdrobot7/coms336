@@ -9,7 +9,7 @@
 #include <ctime>
 #include <limits>
 #include "render.hpp"
-#include "matrix.hpp"
+#include "vector.hpp"
 
 // Framebuffer indices
 #define R (0)
@@ -49,17 +49,18 @@ int Render::run()
     // mAntiAliasingLevel rays per pixel.
     std::cout << "Creating rays..." << std::endl;
     mRays.resize(mHeight);
+    Vector imagePlaneVecs[mAntiAliasingLevel];
     for (int y = 0; y < mHeight; y++)
     {
         mRays[y].resize(mWidth);
         for (int x = 0; x < mWidth; x++)
         {
             mRays[y][x].resize(mAntiAliasingLevel);
-            matrix_t imagePlaneVecs = getImgPlanePixelMultiple(y, x);
+            getImgPlanePixelMultiple(imagePlaneVecs, y, x);
             for (int i = 0; i < mAntiAliasingLevel; i++)
             {
-                vector_t vRay = Matrix::vsub(imagePlaneVecs[i], mScene.mCamera.mOrigin);
-                mRays[y][x][i] = Ray(mScene.mCamera.mOrigin, Matrix::vnorm(vRay));
+                Vector vRay = Vector::svsub(imagePlaneVecs[i], mScene.mCamera.mOrigin).vnorm();
+                mRays[y][x][i] = Ray(mScene.mCamera.mOrigin, vRay);
             }
         }
     }
@@ -172,7 +173,7 @@ void Render::renderPixel()
         rays = mRays[nextY][nextX];
         mRaysLock.unlock();
 
-        color_t pixelColor = {0.0, 0.0, 0.0};
+        Color pixelColor = {0.0, 0.0, 0.0};
         for (Ray r : rays)
         {
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
@@ -181,14 +182,14 @@ void Render::renderPixel()
             {
                 object::Primitive::Collision closestCollision = object::Primitive::Collision::MISSED;
                 double minT = std::numeric_limits<double>::infinity();
-                color_t closestColor;
+                Color closestColor;
                 Ray closestRay = Ray(baseRay);
 
                 for (const auto &p : mScene.mPrimitives)
                 {
                     // Check collision with every object, we need to find the *closest* collision
                     double t;
-                    color_t color;
+                    Color color;
                     Ray thisCollision = Ray(baseRay);
                     object::Primitive::Collision collision = p->collide(thisCollision, t, color);
                     if (collision != object::Primitive::Collision::MISSED && t < minT)
@@ -210,7 +211,7 @@ void Render::renderPixel()
                 {
                     // Ray was absorbed, we've found its final color
                     closestRay.addCollision(closestColor);
-                    pixelColor = Matrix::vadd(pixelColor, closestRay.mColor);
+                    pixelColor.vadd(closestRay.mColor);
                     break;
                 }
                 else if (closestCollision == object::Primitive::Collision::MISSED)
@@ -221,7 +222,7 @@ void Render::renderPixel()
                 }
             }
         }
-        pixelColor = Matrix::vscale(pixelColor, 1.0 / mAntiAliasingLevel); // Average our ray colors
+        pixelColor.vscale(1.0 / mAntiAliasingLevel); // Average our ray colors
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);
@@ -261,31 +262,28 @@ void Render::setupImgPlane()
      * position.
      */
 
-    mPlaneHeight = Matrix::vscale(mScene.mCamera.mTop, -1);
-    mPlaneWidth = Matrix::vnorm(Matrix::cross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
+    mPlaneHeight.vscale(mScene.mCamera.mTop, -1);
+    mPlaneWidth.vnorm(Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
 
-    vector_t focalLength = Matrix::vscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
-    vector_t halfHeight = Matrix::vscale(mPlaneHeight, mHeight * 0.5);
-    vector_t halfWidth = Matrix::vscale(mPlaneWidth, mWidth * 0.5);
-    mPlaneOrigin = Matrix::vadd(mScene.mCamera.mOrigin, Matrix::vsub(focalLength, Matrix::vadd(halfWidth, halfHeight)));
+    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
+    Vector halfHeight = Vector::svscale(mPlaneHeight, mHeight * 0.5);
+    Vector halfWidth = Vector::svscale(mPlaneWidth, mWidth * 0.5);
+    mPlaneOrigin.svadd(mScene.mCamera.mOrigin, Vector::svsub(focalLength, Vector::svadd(halfWidth, halfHeight)));
 }
 
-vector_t Render::getImgPlanePixel(int y, int x)
+Vector &Render::getImgPlanePixel(int y, int x)
 {
-    vector_t ret = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, y + 0.5));
-    return Matrix::vadd(ret, Matrix::vscale(mPlaneWidth, x + 0.5));
+    Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, y + 0.5));
+    return ret.vadd(ret, Vector::svscale(mPlaneWidth, x + 0.5));
 }
 
-matrix_t Render::getImgPlanePixelMultiple(int y, int x)
+void Render::getImgPlanePixelMultiple(Vector vectors[], int y, int x)
 {
-    matrix_t ret = matrix_t(mAntiAliasingLevel);
-
     for (int i = 0; i < mAntiAliasingLevel; i++)
     {
         double dx = x + (rand() / ((double)RAND_MAX + 1));
         double dy = y + (rand() / ((double)RAND_MAX + 1));
-        vector_t vec = Matrix::vadd(mPlaneOrigin, Matrix::vscale(mPlaneHeight, dy));
-        ret[i] = Matrix::vadd(vec, Matrix::vscale(mPlaneWidth, dx));
+        vectors[i] = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
+        vectors[i].vadd(Vector::svscale(mPlaneWidth, dx));
     }
-    return ret;
 }

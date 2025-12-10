@@ -48,7 +48,7 @@ private:
 
     std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
     std::mutex mRaysLock;
-    vector_t mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Width/heights are normalized, origin is top left corner
+    Vector mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Width/heights are normalized, origin is top left corner
 
     /**
      * @brief Job for an individual thread in the thread
@@ -73,7 +73,7 @@ private:
      * @brief Get a vector that points to the center of the pixel
      * in the image plane specified by x, y.
      */
-    vector_t getImgPlanePixel(int y, int x);
+    Vector &getImgPlanePixel(int y, int x);
 
     /**
      * @brief Get a set of mAntiAliasingLevel vectors randomly
@@ -82,5 +82,5 @@ private:
      *
      * @return matrix_t A mAntiAliasingLevel x 3 matrix of row vectors
      */
-    matrix_t getImgPlanePixelMultiple(int y, int x);
+    void getImgPlanePixelMultiple(Vector vectors[], int y, int x);
 };

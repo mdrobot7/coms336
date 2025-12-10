@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdlib>
 
+Vector::Vector() {}
+
 Vector::Vector(std::vector<double> std_vector)
 {
     if (std_vector.size() != 3)
@@ -33,51 +35,86 @@ double &Vector::operator[](size_t index)
     return v[index];
 }
 
+const double &Vector::operator[](size_t index) const
+{
+    return v[index];
+}
+
 double Vector::dot(Vector &a)
 {
-    return v[0] * a[0] + v[1] * a[1] + v[2] * a[2];
+    return dot(*this, a);
 }
 
-const Vector &Vector::cross3(Vector &a)
+double Vector::dot(Vector &a, Vector &b)
 {
-    v[0] = a[1] * v[2] - a[2] * v[1];
-    v[1] = -1.0 * (a[0] * v[2] - a[2] * v[0]);
-    v[2] = a[0] * v[1] - a[1] * v[0];
+    return b[0] * b[0] + b[1] * b[1] + b[2] * b[2];
+}
+
+Vector &Vector::cross3(Vector &a)
+{
+    return cross3(*this, a);
+}
+
+Vector &Vector::cross3(Vector &a, Vector &b)
+{
+    v[0] = a[1] * b[2] - a[2] * b[1];
+    v[1] = -1.0 * (a[0] * b[2] - a[2] * b[0]);
+    v[2] = a[0] * b[1] - a[1] * b[0];
     return *this;
 }
 
-const Vector &Vector::vadd(Vector &a)
+Vector &Vector::vadd(Vector &a)
 {
-    v[0] += a[0];
-    v[1] += a[1];
-    v[2] += a[2];
+    return vadd(*this, a);
+}
+
+Vector &Vector::vadd(Vector &a, Vector &b)
+{
+    v[0] = a[0] + b[0];
+    v[1] = a[1] + b[1];
+    v[2] = a[2] + b[2];
     return *this;
 }
 
-const Vector &Vector::vsub(Vector &a)
+Vector &Vector::vsub(Vector &a)
 {
-    v[0] -= a[0];
-    v[1] -= a[1];
-    v[2] -= a[2];
+    return vsub(*this, a);
+}
+
+Vector &Vector::vsub(Vector &a, Vector &b)
+{
+    v[0] = a[0] - b[0];
+    v[1] = a[1] - b[1];
+    v[2] = a[2] - b[2];
     return *this;
 }
 
-const Vector &Vector::vscale(double scalar)
+Vector &Vector::vscale(double scalar)
 {
-    v[0] *= scalar;
-    v[1] *= scalar;
-    v[2] *= scalar;
+    return vscale(*this, scalar);
+}
+
+Vector &Vector::vscale(Vector &a, double scalar)
+{
+    v[0] = a[0] * scalar;
+    v[1] = a[1] * scalar;
+    v[2] = a[2] * scalar;
     return *this;
 }
 
-const Vector &Vector::vnorm()
+Vector &Vector::vnorm()
 {
-    double mag = sqrt(dot(*this));
-
-    return (mag != 0.0) ? vscale(1.0 / mag) : *this;
+    return vnorm(*this);
 }
 
-const Vector &Vector::vrand3()
+Vector &Vector::vnorm(Vector &a)
+{
+    double mag = sqrt(dot(a));
+
+    return (mag != 0.0) ? vscale(a, 1.0 / mag) : *this;
+}
+
+Vector &Vector::vrand3()
 {
     v[0] = (double)(rand() - RAND_MAX / 2);
     v[1] = (double)(rand() - RAND_MAX / 2);
