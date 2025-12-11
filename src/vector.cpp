@@ -121,3 +121,48 @@ Vector &Vector::vrand3()
     v[2] = (double)(rand() - RAND_MAX / 2);
     return *this;
 }
+
+ModelMatrix::ModelMatrix() {}
+
+ModelMatrix::ModelMatrix(const Vector &origin, const Vector &front, const Vector &top, const Vector &scale)
+{
+    mOrigin = origin;
+    mFront = front;
+    mTop = top;
+    mRight = Vector::scross3(Vector::svscale(mFront, -1.0), mTop);
+    mScale = scale;
+}
+
+Vector &ModelMatrix::mul(Vector &vec3) const
+{
+    /*
+        Essentially this amounts to a change of basis,
+        translation, and scale. Doing it with discrete operations
+        instead of a single homogeneous matrix because
+        it's easier to write and performance is probably
+        close enough.
+
+        Little hack  for change of basis because top and
+        front are guaranteed to be orthogonal:
+        V_i = (V dot b_i) / |b_i|^2
+    */
+    Vector temp;
+
+    // Handle rotation with change of basis
+    temp[0] = Vector::dot(vec3, mRight) / Vector::dot(mRight, mRight);
+    temp[1] = Vector::dot(vec3, mTop) / Vector::dot(mTop, mTop);
+    temp[2] = Vector::dot(vec3, mFront) / Vector::dot(mFront, mFront);
+
+    // Handle scale
+    temp[0] *= mScale[0];
+    temp[1] *= mScale[1];
+    temp[2] *= mScale[2];
+
+    // Handle translation
+    temp[0] += mOrigin[0];
+    temp[1] += mOrigin[1];
+    temp[2] += mOrigin[2];
+
+    vec3 = temp;
+    return vec3;
+}

@@ -104,3 +104,25 @@ public:
         return v.vrand3();
     }
 };
+
+class ModelMatrix
+{
+public:
+    Vector mOrigin;
+    Vector mFront; // Model's +Z axis
+    Vector mTop;   // Model's +Y axis
+    Vector mRight; // Model's +X axis
+    Vector mScale;
+
+    ModelMatrix();
+    ModelMatrix(const Vector &origin, const Vector &front, const Vector &top, const Vector &scale);
+
+    /**
+     * @brief Turn a 3-vector into a homogeneous 4-vector,
+     * multiply by the model matrix, convert back to a
+     * 3-vector and return.
+     *
+     * Modifies vec3 and returns a reference to vec3.
+     */
+    Vector &mul(Vector &vec3) const;
+};
