@@ -50,6 +50,8 @@ int Render::run()
     std::cout << "Creating rays..." << std::endl;
     mRays.resize(mHeight);
     Vector imagePlaneVecs[mAntiAliasingLevel];
+    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
+    Vector pinhole = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
     for (int y = 0; y < mHeight; y++)
     {
         mRays[y].resize(mWidth);
@@ -59,8 +61,8 @@ int Render::run()
             getImgPlanePixelMultiple(imagePlaneVecs, y, x);
             for (int i = 0; i < mAntiAliasingLevel; i++)
             {
-                Vector vRay = Vector::svsub(imagePlaneVecs[i], mScene.mCamera.mOrigin).vnorm();
-                mRays[y][x][i] = Ray(mScene.mCamera.mOrigin, vRay);
+                Vector vRay = Vector::svsub(imagePlaneVecs[i], pinhole).vnorm();
+                mRays[y][x][i] = Ray(imagePlaneVecs[i], vRay);
             }
         }
     }
@@ -260,15 +262,20 @@ void Render::setupImgPlane()
      * translating the plane into place to find the top left corner. It's centered
      * at the origin now, account for the image plane size, focal length, and camera
      * position.
+     *
+     * The width and height vectors should be the width and height of one pixel. The image
+     * plane is aspectRatio x 1 "unit", so normalize and divide by the resolution.
      */
 
-    mPlaneHeight.vscale(mScene.mCamera.mTop, -1);
-    mPlaneWidth.vnorm(Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
+    double aspectRatio = (double)mWidth / mHeight;
 
-    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
-    Vector halfHeight = Vector::svscale(mPlaneHeight, mHeight * 0.5);
-    Vector halfWidth = Vector::svscale(mPlaneWidth, mWidth * 0.5);
-    mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(focalLength, Vector::svadd(halfWidth, halfHeight)));
+    mPlaneHeight.vscale(mScene.mCamera.mTop, -1.0 / mHeight);
+    Vector widthNorm = Vector::svnorm(Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
+    mPlaneWidth.vscale(widthNorm, aspectRatio / mWidth);
+
+    Vector halfTop = Vector::svscale(mScene.mCamera.mTop, 0.5);
+    Vector halfWidth = Vector::svscale(widthNorm, 0.5 * aspectRatio);
+    mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(halfTop, halfWidth));
 }
 
 Vector &Render::getImgPlanePixel(int y, int x)

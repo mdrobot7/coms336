@@ -1,10 +1,10 @@
 {
     "camera": {
-        "_comment": "Camera is straight up and down pointing into the page. 1 unit = 1 pixel on the image plane, so focal length must be huge.",
+        "_comment": "Camera is straight up and down pointing into the page.",
         "origin": {
             "x": 0,
-            "y": 384,
-            "z": 384
+            "y": 50,
+            "z": 100
         },
         "front": {
             "x": 0,
@@ -16,26 +16,26 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 384
+        "focalLength": 1
     },
     "objects": [
         {
             "_comment": "floor",
             "type": "quad",
             "origin": {
-                "x": -1000,
+                "x": -100,
                 "y": 0,
                 "z": 0
             },
             "width": {
-                "x": 2000,
+                "x": 200,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
                 "y": 0,
-                "z": -1000
+                "z": -100
             },
             "surface": "diffuse",
             "color": "0x7D7D7D"
@@ -44,18 +44,18 @@
             "_comment": "left wall",
             "type": "quad",
             "origin": {
-                "x": -1000,
+                "x": -100,
                 "y": 0,
                 "z": 0
             },
             "width": {
                 "x": 0,
                 "y": 0,
-                "z": -1000
+                "z": -100
             },
             "height": {
                 "x": 0,
-                "y": 1000,
+                "y": 100,
                 "z": 0
             },
             "surface": "emissive",
@@ -65,18 +65,18 @@
             "_comment": "back wall",
             "type": "quad",
             "origin": {
-                "x": -1000,
+                "x": -100,
                 "y": 0,
-                "z": -1000
+                "z": -100
             },
             "width": {
-                "x": 2000,
+                "x": 200,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
-                "y": 1000,
+                "y": 100,
                 "z": 0
             },
             "surface": "diffuse",
@@ -86,18 +86,18 @@
             "_comment": "right wall",
             "type": "quad",
             "origin": {
-                "x": 1000,
+                "x": 100,
                 "y": 0,
                 "z": 0
             },
             "width": {
                 "x": 0,
                 "y": 0,
-                "z": -1000
+                "z": -100
             },
             "height": {
                 "x": 0,
-                "y": 1000,
+                "y": 100,
                 "z": 0
             },
             "surface": "emissive",
@@ -107,19 +107,19 @@
             "_comment": "ceiling",
             "type": "quad",
             "origin": {
-                "x": -1000,
-                "y": 1000,
+                "x": -100,
+                "y": 100,
                 "z": 0
             },
             "width": {
-                "x": 2000,
+                "x": 200,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
                 "y": 0,
-                "z": -1000
+                "z": -100
             },
             "surface": "emissive",
             "color": "0xFFFFFF"
@@ -128,18 +128,18 @@
             "_comment": "backlight",
             "type": "quad",
             "origin": {
-                "x": -10000,
-                "y": -10000,
+                "x": -1000,
+                "y": -1000,
                 "z": 600
             },
             "width": {
-                "x": 20000,
+                "x": 2000,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
-                "y": 20000,
+                "y": 2000,
                 "z": 0
             },
             "surface": "emissive",
@@ -148,27 +148,27 @@
         {
             "type": "sphere",
             "x": 0,
-            "y": 150,
-            "z": -300,
-            "radius": 100,
+            "y": 15,
+            "z": -30,
+            "radius": 10,
             "surface": "diffuse",
             "color": "0xFF0000"
         },
         {
             "type": "sphere",
-            "x": -500,
-            "y": 300,
-            "z": -400,
-            "radius": 200,
+            "x": -50,
+            "y": 30,
+            "z": -40,
+            "radius": 20,
             "surface": "specular",
             "color": "0x000000"
         },
         {
             "type": "sphere",
-            "x": 500,
-            "y": 300,
-            "z": -500,
-            "radius": 250,
+            "x": 50,
+            "y": 30,
+            "z": -50,
+            "radius": 25,
             "surface": "dielectric",
             "color": "0xFFFFFF",
             "indexOfRefraction": 1.458
@@ -177,19 +177,19 @@
             "type": "triangle",
             "vertices": [
                 {
-                    "x": 400,
-                    "y": 400,
-                    "z": -800
+                    "x": 40,
+                    "y": 40,
+                    "z": -80
                 },
                 {
-                    "x": -400,
-                    "y": 400,
-                    "z": -800
+                    "x": -40,
+                    "y": 40,
+                    "z": -80
                 },
                 {
                     "x": 0,
-                    "y": 700,
-                    "z": -800
+                    "y": 70,
+                    "z": -80
                 }
             ],
             "surface": "diffuse",

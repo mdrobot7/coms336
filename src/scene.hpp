@@ -147,6 +147,11 @@ namespace object
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
 
+    /**
+     * aspectRatio x 1 "unit" image plane. Origin vector points to the center
+     * of the image plane, front and top determine orientation. Focal length
+     * sets how far the "pinhole" is behind the image plane.
+     */
     class Camera
     {
     public:
