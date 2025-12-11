@@ -137,10 +137,7 @@ namespace object
     class Model : public Primitive
     {
     public:
-        Vector mOrigin;
-        Vector mFront;
-        Vector mTop;
-        Vector mScale; // [scaleX, scaleY, scaleZ]
+        ModelMatrix mModelMatrix;
         enum Color::Surface mSurface;
         Color mColor;
         double mIndexOfRefraction;

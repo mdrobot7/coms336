@@ -347,10 +347,7 @@ namespace object
 
     Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color) : mObj(obj)
     {
-        mOrigin = origin;
-        mFront = Vector::svnorm(front);
-        mTop = Vector::svnorm(top);
-        mScale = scale;
+        mModelMatrix = ModelMatrix(origin, Vector::svnorm(front), Vector::svnorm(top), scale);
         mSurface = surface;
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
@@ -358,20 +355,21 @@ namespace object
 
     Model::Model(nlohmann::json &json, tinyobj::ObjReader &obj) : mObj(obj)
     {
-        mOrigin = Vector(json["origin"]["x"],
-                         json["origin"]["y"],
-                         json["origin"]["z"]);
-        mFront = Vector(json["front"]["x"],
-                        json["front"]["y"],
-                        json["front"]["z"])
-                     .vnorm();
-        mTop = Vector(json["top"]["x"],
-                      json["top"]["y"],
-                      json["top"]["z"])
-                   .vnorm();
-        mScale = Vector(json["scale"]["x"],
-                        json["scale"]["y"],
-                        json["scale"]["z"]);
+        mModelMatrix = ModelMatrix(
+            Vector(json["origin"]["x"],
+                   json["origin"]["y"],
+                   json["origin"]["z"]),
+            Vector(json["front"]["x"],
+                   json["front"]["y"],
+                   json["front"]["z"])
+                .vnorm(),
+            Vector(json["top"]["x"],
+                   json["top"]["y"],
+                   json["top"]["z"])
+                .vnorm(),
+            Vector(json["scale"]["x"],
+                   json["scale"]["y"],
+                   json["scale"]["z"]));
         mSurface = Color::stringToSurface(json["surface"]);
         if (mSurface == Color::Surface::DIELECTRIC)
         {
@@ -414,6 +412,10 @@ namespace object
                     {
                         tri.mVertices[i].v[j] = attrib.vertices[3 * size_t(index.vertex_index) + j];
                     }
+
+                    // Handle scaling, rotation, and positioning (model matrix).
+                    // Do on the fly so we can do proper object instancing (vertex shader-style)
+                    mModelMatrix.mul(tri.mVertices[i]);
                 }
                 // Fill in surface normal assuming CCW winding order (standard for OBJ and OpenGL)
                 tri.mNormal.cross3(Vector::svsub(tri.mVertices[1], tri.mVertices[0]), Vector::svsub(tri.mVertices[2], tri.mVertices[1]));
