@@ -502,7 +502,7 @@ void Scene::load(std::string sceneJsonPath)
             }
             if (fileIndex == mTextureFilenames.size())
             {
-                mTextures.push_back(cimg_library::CImg<unsigned char>(std::string(i["texture"]).c_str()));
+                mTextures.push_back(STBImage(i["texture"]));
                 mTextureFilenames.push_back(i["texture"]);
             }
             p->mTexture = &mTextures[fileIndex];

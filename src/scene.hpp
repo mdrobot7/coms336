@@ -4,7 +4,7 @@
 #include <string>
 #include "nlohmann/json.hpp"
 #include "tiny_obj_loader.h"
-#include "cimg.hpp"
+#include "stb.hpp"
 #include "vector.hpp"
 #include "ray.hpp"
 #include "color.hpp"
@@ -26,7 +26,7 @@ namespace object
         enum Color::Surface mSurface;
         double mIndexOfRefraction;
         Color mColor;
-        cimg_library::CImg<unsigned char> *mTexture;
+        STBImage *mTexture;
 
         Primitive();
         Primitive(nlohmann::json &json);
@@ -186,7 +186,7 @@ public:
     std::vector<std::string> mObjFilenames;
 
     // List of textures
-    cimg_library::CImgList<unsigned char> mTextures;
+    std::vector<STBImage> mTextures;
     std::vector<std::string> mTextureFilenames;
 
     Scene();

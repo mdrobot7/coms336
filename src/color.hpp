@@ -11,6 +11,9 @@ class Color : public Vector
 public:
     using Vector::Vector;
 
+    // Explicit conversion constructor, since it's a downcast
+    Color(Vector &vec);
+
     enum Surface
     {
         SPECULAR = 0,

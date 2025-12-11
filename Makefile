@@ -3,7 +3,7 @@ BUILD_DIR := ./build
 SRC_DIR := ./src
 LIB_DIR := ./lib
 
-CIMG_PATH := $(LIB_DIR)/CImg
+STB_PATH := $(LIB_DIR)/stb
 
 NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
 
@@ -12,7 +12,7 @@ TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
 CC := g++
 COMMON_FLAGS := -O3 -g
 CFLAGS := -Wall -Wextra
-CPPFLAGS := -MMD -MP -I$(CIMG_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH)
+CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH)
 LDFLAGS := --gc-sections
 
 SOURCES := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp) # Shell "find" sucks on Windows, so we're doing this

@@ -8,6 +8,13 @@ const std::map<std::string, enum Color::Surface> Color::sSurfaceMap = {
     {"emissive", Color::EMISSIVE},
 };
 
+Color::Color(Vector &vec)
+{
+    v[0] = vec[0];
+    v[1] = vec[1];
+    v[2] = vec[2];
+}
+
 enum Color::Surface Color::stringToSurface(std::string str)
 {
     auto val = sSurfaceMap.find(str);
