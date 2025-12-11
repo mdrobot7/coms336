@@ -3,7 +3,7 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-#include "matrix.hpp"
+#include "vector.hpp"
 #include "scene.hpp"
 #include "color.hpp"
 #include "common.hpp"
@@ -16,37 +16,37 @@ namespace object
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json json) { (void)json; }
 
-    bool Primitive::specular(Ray &incoming, vector_t intersection, vector_t normal) const
+    bool Primitive::specular(Ray &incoming, Vector intersection, Vector normal) const
     {
         static const double fuzziness = 0.0; // TODO: Potentially use later
 
         incoming.mOrigin = intersection;
         // mDir = mDir - normal * 2 * dot(mDir, normal)
-        incoming.mDir = Matrix::vnorm(Matrix::vsub(incoming.mDir, Matrix::vscale(normal, 2 * Matrix::dot(incoming.mDir, normal))));
+        incoming.mDir.vnorm(Vector::svsub(incoming.mDir, Vector::svscale(normal, 2 * Vector::dot(incoming.mDir, normal))));
 
         // Add fuzziness. If the fuzzy vector is shot inside the object,
         // the object just absorbs it and the ray stops.
-        incoming.mDir = Matrix::vadd(incoming.mDir, Matrix::vscale(Matrix::vrand3(), fuzziness));
-        return (Matrix::dot(incoming.mDir, normal) > 0.0);
+        incoming.mDir = Vector::svadd(incoming.mDir, Vector::svscale(Vector::svrand3(), fuzziness));
+        return (Vector::dot(incoming.mDir, normal) > 0.0);
     }
 
-    bool Primitive::diffuse(Ray &incoming, vector_t intersection, vector_t normal) const
+    bool Primitive::diffuse(Ray &incoming, Vector intersection, Vector normal) const
     {
         // Reflect 1 ray with a Lambertian reflection
         incoming.mOrigin = intersection;
-        incoming.mDir = Matrix::vnorm(Matrix::vadd(normal, Matrix::vrand3()));
+        incoming.mDir.vnorm(Vector::svadd(normal, Vector::svrand3()));
         return true;
     }
 
-    bool Primitive::dielectric(Ray &incoming, vector_t intersection, vector_t normal, double indexOfRefraction) const
+    bool Primitive::dielectric(Ray &incoming, Vector intersection, Vector normal, double indexOfRefraction) const
     {
         // Check whether we're coming in or out of an object.
         // Normal and incoming vector will be opposite each other.
-        bool outsideObject = Matrix::dot(incoming.mDir, normal) < 0.0;
+        bool outsideObject = Vector::dot(incoming.mDir, normal) < 0.0;
 
         // Determine if we have total internal reflection
         double refractionIndex = outsideObject ? 1.0 / indexOfRefraction : indexOfRefraction;
-        double cosTheta = std::fmin(Matrix::dot(Matrix::vscale(incoming.mDir, -1.0), normal), 1.0);
+        double cosTheta = std::fmin(Vector::dot(Vector::svscale(incoming.mDir, -1.0), normal), 1.0);
         double sinTheta = sqrt(1.0 - cosTheta * cosTheta);
 
         // Schlick's approximation
@@ -62,19 +62,18 @@ namespace object
         }
 
         // See raytracing in one weekend. Complex math based on Snell's law.
-        vector_t rOutPerp = Matrix::vscale(Matrix::vadd(incoming.mDir, Matrix::vscale(normal, cosTheta)), refractionIndex);
-        vector_t rOutParallel = Matrix::vscale(normal, -sqrt(fabs(1.0 - Matrix::dot(rOutPerp, rOutPerp))));
+        Vector rOutPerp = Vector::svscale(Vector::svadd(incoming.mDir, Vector::svscale(normal, cosTheta)), refractionIndex);
+        Vector rOutParallel = Vector::svscale(normal, -sqrt(fabs(1.0 - Vector::dot(rOutPerp, rOutPerp))));
 
-        incoming.mDir = Matrix::vnorm(Matrix::vadd(rOutPerp, rOutParallel));
+        incoming.mDir.vnorm(Vector::svadd(rOutPerp, rOutParallel));
         incoming.mOrigin = intersection;
         incoming.mIndexOfRefraction = indexOfRefraction;
 
         return true;
     }
 
-    Triangle::Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, double indexOfRefraction, color_t color)
+    Triangle::Triangle(Vector &v0, Vector &v1, Vector &v2, enum Color::Surface surface, double indexOfRefraction, Color &color)
     {
-        mVertices = matrix_t(3);
         mVertices[0] = v0;
         mVertices[1] = v1;
         mVertices[2] = v2;
@@ -83,18 +82,17 @@ namespace object
         mColor = color;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
-        mNormal = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(mVertices[2], mVertices[1]));
-        mNormal = Matrix::vnorm(mNormal);
+        mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
+        mNormal.vnorm();
     }
 
     Triangle::Triangle(nlohmann::json json)
     {
-        mVertices = matrix_t(3);
         for (int i = 0; i < 3; i++)
         {
-            mVertices[i] = vector_t{json["vertices"][i]["x"],
-                                    json["vertices"][i]["y"],
-                                    json["vertices"][i]["z"]};
+            mVertices[i] = Vector(json["vertices"][i]["x"],
+                                  json["vertices"][i]["y"],
+                                  json["vertices"][i]["z"]);
         }
 
         mSurface = Color::stringToSurface(json["surface"]);
@@ -106,21 +104,21 @@ namespace object
         mColor = Color::intToColor(color);
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
-        mNormal = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(mVertices[2], mVertices[1]));
-        mNormal = Matrix::vnorm(mNormal);
+        mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
+        mNormal.vnorm();
     }
 
-    enum Primitive::Collision Triangle::collide(Ray &incoming, double &t, color_t &color) const
+    enum Primitive::Collision Triangle::collide(Ray &incoming, double &t, Color &color) const
     {
         // Check ray-plane intersection
-        double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
+        double dirDotNorm = Vector::dot(incoming.mDir, mNormal);
         if (CLOSE_TO(dirDotNorm, 0.0))
         {
             // Incoming is parallel
             return Collision::MISSED;
         }
 
-        t = Matrix::dot(Matrix::vsub(mVertices[0], incoming.mOrigin), mNormal) / dirDotNorm;
+        t = Vector::svsub(mVertices[0], incoming.mOrigin).dot(mNormal) / dirDotNorm;
         if (t < 0)
         {
             // Don't hit things behind us
@@ -132,17 +130,18 @@ namespace object
             return Collision::MISSED;
         }
 
-        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
+        Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
 
         // Split triangle into subtriangles, calculate normals
-        vector_t normA = Matrix::cross3(Matrix::vsub(mVertices[2], mVertices[1]), Matrix::vsub(intersection, mVertices[1]));
-        vector_t normB = Matrix::cross3(Matrix::vsub(mVertices[0], mVertices[2]), Matrix::vsub(intersection, mVertices[2]));
-        vector_t normC = Matrix::cross3(Matrix::vsub(mVertices[1], mVertices[0]), Matrix::vsub(intersection, mVertices[0]));
+        Vector normA, normB, normC;
+        normA.cross3(Vector::svsub(mVertices[2], mVertices[1]), Vector::svsub(intersection, mVertices[1]));
+        normB.cross3(Vector::svsub(mVertices[0], mVertices[2]), Vector::svsub(intersection, mVertices[2]));
+        normC.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(intersection, mVertices[0]));
 
         // Calculate barycentrics
-        double alpha = Matrix::dot(mNormal, normA) / Matrix::dot(mNormal, mNormal);
-        double beta = Matrix::dot(mNormal, normB) / Matrix::dot(mNormal, mNormal);
-        double gamma = Matrix::dot(mNormal, normC) / Matrix::dot(mNormal, mNormal);
+        double alpha = Vector::dot(mNormal, normA) / Vector::dot(mNormal, mNormal);
+        double beta = Vector::dot(mNormal, normB) / Vector::dot(mNormal, mNormal);
+        double gamma = Vector::dot(mNormal, normC) / Vector::dot(mNormal, mNormal);
         if (alpha < 0.0 || beta < 0.0 || gamma < 0.0)
         {
             // Did not intersect
@@ -153,7 +152,7 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
-            color = color_t{1, 1, 1};
+            color = Color(1, 1, 1);
             return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
             color = mColor;
@@ -168,7 +167,7 @@ namespace object
         throw std::invalid_argument("Triangle collision error");
     }
 
-    Sphere::Sphere(vector_t center, double radius, enum Color::Surface surface, double indexOfRefraction, color_t color)
+    Sphere::Sphere(Vector &center, double radius, enum Color::Surface surface, double indexOfRefraction, Color &color)
     {
         mOrigin = center;
         mRadius = radius;
@@ -179,9 +178,9 @@ namespace object
 
     Sphere::Sphere(nlohmann::json json)
     {
-        mOrigin = vector_t{json["x"],
-                           json["y"],
-                           json["z"]};
+        mOrigin = Vector(json["x"],
+                         json["y"],
+                         json["z"]);
         mRadius = json["radius"];
         mSurface = Color::stringToSurface(json["surface"]);
         if (mSurface == Color::Surface::DIELECTRIC)
@@ -192,14 +191,14 @@ namespace object
         mColor = Color::intToColor(color);
     }
 
-    enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, color_t &color) const
+    enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
     {
         // The math for this is really complicated, it's basically
         // solving a quadratic equation. See Ray Tracing in One Weekend
-        vector_t centerMinusIncoming = Matrix::vsub(mOrigin, incoming.mOrigin);
-        double a = Matrix::dot(incoming.mDir, incoming.mDir);
-        double b = -2.0 * Matrix::dot(incoming.mDir, centerMinusIncoming);
-        double c = Matrix::dot(centerMinusIncoming, centerMinusIncoming) - mRadius * mRadius;
+        Vector centerMinusIncoming = Vector::svsub(mOrigin, incoming.mOrigin);
+        double a = Vector::dot(incoming.mDir, incoming.mDir);
+        double b = -2.0 * Vector::dot(incoming.mDir, centerMinusIncoming);
+        double c = Vector::dot(centerMinusIncoming, centerMinusIncoming) - mRadius * mRadius;
         double discriminant = b * b - 4.0 * a * c;
         if (discriminant < 0)
         {
@@ -231,6 +230,7 @@ namespace object
             }
         }
 
+        // DEBUG
         if (mSurface == Color::Surface::DIELECTRIC)
         {
             int foo = 0;
@@ -238,19 +238,19 @@ namespace object
         }
 
         // Bounce it
-        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
-        vector_t normal = Matrix::vscale(Matrix::vsub(intersection, mOrigin), 1.0 / mRadius);
+        Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
+        Vector normal = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
         switch (mSurface)
         {
         case Color::SPECULAR:
-            color = color_t{1, 1, 1};
+            color = Color{1, 1, 1};
             return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
             color = mColor;
             return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            // color = mColor;
-            color = color_t{1, 1, 1};
+            // color = mColor; // DEBUG
+            color = Color{1, 1, 1};
             return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             color = mColor;
@@ -259,7 +259,7 @@ namespace object
         throw std::invalid_argument("Sphere collision error");
     }
 
-    Quad::Quad(vector_t origin, vector_t width, vector_t height, enum Color::Surface surface, double indexOfRefraction, color_t color)
+    Quad::Quad(Vector &origin, Vector &width, Vector &height, enum Color::Surface surface, double indexOfRefraction, Color &color)
     {
         mOrigin = origin;
         mWidth = width;
@@ -268,22 +268,22 @@ namespace object
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
 
-        vector_t widthCrossHeight = Matrix::cross3(mWidth, mHeight);
-        mNormal = Matrix::vnorm(widthCrossHeight);
-        mW = Matrix::vscale(widthCrossHeight, 1.0 / Matrix::dot(widthCrossHeight, widthCrossHeight));
+        Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
+        mNormal = Vector::svnorm(widthCrossHeight);
+        mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
     }
 
     Quad::Quad(nlohmann::json json)
     {
-        mOrigin = vector_t{json["origin"]["x"],
-                           json["origin"]["y"],
-                           json["origin"]["z"]};
-        mWidth = vector_t{json["width"]["x"],
-                          json["width"]["y"],
-                          json["width"]["z"]};
-        mHeight = vector_t{json["height"]["x"],
-                           json["height"]["y"],
-                           json["height"]["z"]};
+        mOrigin = Vector(json["origin"]["x"],
+                         json["origin"]["y"],
+                         json["origin"]["z"]);
+        mWidth = Vector(json["width"]["x"],
+                        json["width"]["y"],
+                        json["width"]["z"]);
+        mHeight = Vector(json["height"]["x"],
+                         json["height"]["y"],
+                         json["height"]["z"]);
         mSurface = Color::stringToSurface(json["surface"]);
         if (mSurface == Color::Surface::DIELECTRIC)
         {
@@ -292,22 +292,22 @@ namespace object
         int color = std::stoi((std::string)(json["color"]), 0, 16);
         mColor = Color::intToColor(color);
 
-        vector_t widthCrossHeight = Matrix::cross3(mWidth, mHeight);
-        mNormal = Matrix::vnorm(widthCrossHeight);
-        mW = Matrix::vscale(widthCrossHeight, 1.0 / Matrix::dot(widthCrossHeight, widthCrossHeight));
+        Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
+        mNormal = Vector::svnorm(widthCrossHeight);
+        mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
     }
 
-    enum Primitive::Collision Quad::collide(Ray &incoming, double &t, color_t &color) const
+    enum Primitive::Collision Quad::collide(Ray &incoming, double &t, Color &color) const
     {
         // Check ray-plane intersection
-        double dirDotNorm = Matrix::dot(incoming.mDir, mNormal);
+        double dirDotNorm = Vector::dot(incoming.mDir, mNormal);
         if (CLOSE_TO(dirDotNorm, 0.0))
         {
             // Incoming is parallel
             return Collision::MISSED;
         }
 
-        t = Matrix::dot(Matrix::vsub(mOrigin, incoming.mOrigin), mNormal) / dirDotNorm;
+        t = Vector::dot(Vector::svsub(mOrigin, incoming.mOrigin), mNormal) / dirDotNorm;
         if (t < 0)
         {
             // Don't hit things behind us
@@ -319,10 +319,10 @@ namespace object
             return Collision::MISSED;
         }
 
-        vector_t intersection = Matrix::vadd(incoming.mOrigin, Matrix::vscale(incoming.mDir, t));
-        vector_t planarIntersection = Matrix::vsub(intersection, mOrigin);
-        double alpha = Matrix::dot(mW, Matrix::cross3(planarIntersection, mHeight));
-        double beta = Matrix::dot(mW, Matrix::cross3(mWidth, planarIntersection));
+        Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
+        Vector planarIntersection = Vector::svsub(intersection, mOrigin);
+        double alpha = Vector::dot(mW, Vector::scross3(planarIntersection, mHeight));
+        double beta = Vector::dot(mW, Vector::scross3(mWidth, planarIntersection));
 
         // planarIntersection = alpha * mWidth + beta * mHeight.
         // If alpha and beta are [0.0, 1.0], then the intersection is inside the quad.
@@ -335,7 +335,7 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
-            color = color_t{1, 1, 1};
+            color = Color{1, 1, 1};
             return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
             color = mColor;
@@ -350,57 +350,60 @@ namespace object
         throw std::invalid_argument("Quad collision error");
     }
 
-    Model::Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale) : mObj(obj)
+    Model::Model(tinyobj::ObjReader obj, Vector &origin, Vector &front, Vector &top, Vector &scale) : mObj(obj)
     {
         mOrigin = origin;
-        mFront = Matrix::vnorm(front);
-        mTop = Matrix::vnorm(top);
+        mFront = Vector::svnorm(front);
+        mTop = Vector::svnorm(top);
         mScale = scale;
     }
 
     Model::Model(nlohmann::json json, tinyobj::ObjReader obj) : mObj(obj)
     {
-        mOrigin = vector_t{json["origin"]["x"],
-                           json["origin"]["y"],
-                           json["origin"]["z"]};
-        mFront = Matrix::vnorm(vector_t{json["front"]["x"],
-                                        json["front"]["y"],
-                                        json["front"]["z"]});
-        mTop = Matrix::vnorm(vector_t{json["top"]["x"],
-                                      json["top"]["y"],
-                                      json["top"]["z"]});
-        mScale = vector_t{json["scale"]["x"],
-                          json["scale"]["y"],
-                          json["scale"]["z"]};
+        mOrigin = Vector(json["origin"]["x"],
+                         json["origin"]["y"],
+                         json["origin"]["z"]);
+        mFront = Vector(json["front"]["x"],
+                        json["front"]["y"],
+                        json["front"]["z"])
+                     .vnorm();
+        mTop = Vector(json["top"]["x"],
+                      json["top"]["y"],
+                      json["top"]["z"])
+                   .vnorm();
+        mScale = Vector(json["scale"]["x"],
+                        json["scale"]["y"],
+                        json["scale"]["z"]);
     }
 
-    enum Primitive::Collision Model::collide(Ray &incoming, double &t, color_t &color) const
+    enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
     {
         return Collision::ABSORBED;
     }
 
     Camera::Camera() {}
 
-    Camera::Camera(vector_t origin, vector_t front, vector_t top, double focalLength)
+    Camera::Camera(Vector &origin, Vector &front, Vector &top, double focalLength)
     {
         mOrigin = origin;
-        mFront = Matrix::vnorm(front);
-        mTop = Matrix::vnorm(top);
+        mFront = front.vnorm();
+        mTop = top.vnorm();
         mFocalLength = focalLength;
     }
 
     Camera::Camera(nlohmann::json json)
     {
-        mOrigin = vector_t{json["origin"]["x"],
-                           json["origin"]["y"],
-                           json["origin"]["z"]};
-        mFront = Matrix::vnorm(vector_t{json["front"]["x"],
-                                        json["front"]["y"],
-                                        json["front"]["z"]});
-
-        mTop = Matrix::vnorm(vector_t{json["top"]["x"],
-                                      json["top"]["y"],
-                                      json["top"]["z"]});
+        mOrigin = Vector(json["origin"]["x"],
+                         json["origin"]["y"],
+                         json["origin"]["z"]);
+        mFront = Vector(json["front"]["x"],
+                        json["front"]["y"],
+                        json["front"]["z"])
+                     .vnorm();
+        mTop = Vector(json["top"]["x"],
+                      json["top"]["y"],
+                      json["top"]["z"])
+                   .vnorm();
         mFocalLength = json["focalLength"];
     }
 }

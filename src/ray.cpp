@@ -3,15 +3,15 @@
 
 Ray::Ray() {}
 
-Ray::Ray(vector_t origin, vector_t dir)
+Ray::Ray(Vector origin, Vector dir)
 {
     mOrigin = origin;
     mDir = dir;
-    mColor = color_t{1.0, 1.0, 1.0};
+    mColor = Color(1.0, 1.0, 1.0);
     mIndexOfRefraction = 1.0; // Air
 }
 
-void Ray::addCollision(color_t color)
+void Ray::addCollision(Color color)
 {
     mColor = Color::attenuate(mColor, color);
 }

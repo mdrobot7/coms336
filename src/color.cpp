@@ -21,22 +21,22 @@ enum Color::Surface Color::stringToSurface(std::string str)
     }
 }
 
-color_t Color::intToColor(int i)
+Color Color::intToColor(int i)
 {
-    return color_t{((i & 0xFF0000) >> 16) / 256.0, ((i & 0xFF00) >> 8) / 256.0, (i & 0xFF) / 256.0};
+    return Color(((i & 0xFF0000) >> 16) / 256.0, ((i & 0xFF00) >> 8) / 256.0, (i & 0xFF) / 256.0);
 }
 
-int Color::colorToInt(color_t c)
+int Color::colorToInt(Color c)
 {
     return (((uint8_t)(c[0] * 256)) << 16) | (((uint8_t)(c[1] * 256)) << 8) | ((uint8_t)(c[2] * 256));
 }
 
-color_t Color::attenuate(color_t surface, color_t incoming)
+Color Color::attenuate(Color surface, Color incoming)
 {
-    return color_t{surface[0] * incoming[0], surface[1] * incoming[1], surface[2] * incoming[2]};
+    return Color(surface[0] * incoming[0], surface[1] * incoming[1], surface[2] * incoming[2]);
 }
 
-color_t Color::refract(color_t surface, color_t incoming)
+Color Color::refract(Color surface, Color incoming)
 {
     // TODO this is hard
     return incoming;

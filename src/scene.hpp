@@ -4,7 +4,7 @@
 #include <string>
 #include "nlohmann/json.hpp"
 #include "tiny_obj_loader.h"
-#include "matrix.hpp"
+#include "vector.hpp"
 #include "ray.hpp"
 #include "color.hpp"
 
@@ -35,7 +35,7 @@ namespace object
          * @param color Color of the object at the collision point.
          * @return enum Collision Type of collision that occurred
          */
-        virtual enum Collision collide(Ray &incoming, double &t, color_t &color) const = 0;
+        virtual enum Collision collide(Ray &incoming, double &t, Color &color) const = 0;
 
         // Ray collision helpers (common to all object types)
 
@@ -48,7 +48,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool specular(Ray &incoming, vector_t intersection, vector_t normal) const;
+        bool specular(Ray &incoming, Vector intersection, Vector normal) const;
 
         /**
          * @brief Handle a diffuse reflection.
@@ -59,7 +59,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool diffuse(Ray &incoming, vector_t intersection, vector_t normal) const;
+        bool diffuse(Ray &incoming, Vector intersection, Vector normal) const;
 
         /**
          * @brief Handle a dielectric reflection/refraction.
@@ -68,7 +68,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool dielectric(Ray &incoming, vector_t intersection, vector_t normal, double indexOfRefraction) const;
+        bool dielectric(Ray &incoming, Vector intersection, Vector normal, double indexOfRefraction) const;
     };
 
     /**
@@ -80,16 +80,16 @@ namespace object
     class Triangle : public Primitive
     {
     public:
-        matrix_t mVertices; // Vertices are row vectors
-        vector_t mNormal;   // Normal vector, determined by winding order of vertices
+        Vector mVertices[3];
+        Vector mNormal; // Normal vector, determined by winding order of vertices
         enum Color::Surface mSurface;
         double mIndexOfRefraction;
-        color_t mColor;
+        Color mColor;
 
-        Triangle(vector_t v0, vector_t v1, vector_t v2, enum Color::Surface surface, double indexOfRefraction, color_t color);
+        Triangle(Vector &v0, Vector &v1, Vector &v2, enum Color::Surface surface, double indexOfRefraction, Color &color);
         Triangle(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
+        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
 
     /**
@@ -100,63 +100,63 @@ namespace object
     class Sphere : public Primitive
     {
     public:
-        vector_t mOrigin;
+        Vector mOrigin;
         double mRadius;
         enum Color::Surface mSurface;
         double mIndexOfRefraction;
-        color_t mColor;
+        Color mColor;
 
-        Sphere(vector_t origin, double radius, enum Color::Surface surface, double indexOfRefraction, color_t color);
+        Sphere(Vector &origin, double radius, enum Color::Surface surface, double indexOfRefraction, Color &color);
         Sphere(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
+        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
 
     class Quad : public Primitive
     {
     public:
-        vector_t mOrigin;
-        vector_t mWidth, mHeight;
-        vector_t mNormal;
+        Vector mOrigin;
+        Vector mWidth, mHeight;
+        Vector mNormal;
         enum Color::Surface mSurface;
-        color_t mColor;
+        Color mColor;
         double mIndexOfRefraction;
 
-        Quad(vector_t origin, vector_t width, vector_t height, enum Color::Surface surface, double indexOfRefraction, color_t color);
+        Quad(Vector &origin, Vector &width, Vector &height, enum Color::Surface surface, double indexOfRefraction, Color &color);
         Quad(nlohmann::json json);
 
-        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
+        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
 
     private:
-        vector_t mW; // Used for intersection checking
+        Vector mW; // Used for intersection checking
     };
 
     class Model : public Primitive
     {
     public:
-        vector_t mOrigin;
-        vector_t mFront;
-        vector_t mTop;
-        vector_t mScale; // [scaleX, scaleY, scaleZ]
+        Vector mOrigin;
+        Vector mFront;
+        Vector mTop;
+        Vector mScale; // [scaleX, scaleY, scaleZ]
 
         tinyobj::ObjReader &mObj;
 
-        Model(tinyobj::ObjReader obj, vector_t origin, vector_t front, vector_t top, vector_t scale);
+        Model(tinyobj::ObjReader obj, Vector &origin, Vector &front, Vector &top, Vector &scale);
         Model(nlohmann::json json, tinyobj::ObjReader obj);
 
-        enum Collision collide(Ray &incoming, double &t, color_t &color) const override;
+        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
 
     class Camera
     {
     public:
-        vector_t mOrigin;
-        vector_t mFront;
-        vector_t mTop;
+        Vector mOrigin;
+        Vector mFront;
+        Vector mTop;
         double mFocalLength;
 
         Camera();
-        Camera(vector_t origin, vector_t front, vector_t top, double focalLength);
+        Camera(Vector &origin, Vector &front, Vector &top, double focalLength);
         Camera(nlohmann::json json);
     };
 }; // namespace Object
