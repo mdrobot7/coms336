@@ -109,7 +109,7 @@ Vector &Vector::vnorm()
 
 Vector &Vector::vnorm(const Vector &a)
 {
-    double mag = sqrt(dot(a));
+    double mag = sqrt(dot(a, a));
 
     return (mag != 0.0) ? vscale(a, 1.0 / mag) : *this;
 }

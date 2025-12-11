@@ -268,7 +268,7 @@ void Render::setupImgPlane()
     Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
     Vector halfHeight = Vector::svscale(mPlaneHeight, mHeight * 0.5);
     Vector halfWidth = Vector::svscale(mPlaneWidth, mWidth * 0.5);
-    mPlaneOrigin.svadd(mScene.mCamera.mOrigin, Vector::svsub(focalLength, Vector::svadd(halfWidth, halfHeight)));
+    mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(focalLength, Vector::svadd(halfWidth, halfHeight)));
 }
 
 Vector &Render::getImgPlanePixel(int y, int x)
