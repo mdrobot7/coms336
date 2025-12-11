@@ -4,6 +4,7 @@
 #include <string>
 #include "nlohmann/json.hpp"
 #include "tiny_obj_loader.h"
+#include "cimg.hpp"
 #include "vector.hpp"
 #include "ray.hpp"
 #include "color.hpp"
@@ -22,6 +23,11 @@ namespace object
 
         static constexpr double sRefractionGlass = 1.458;
 
+        enum Color::Surface mSurface;
+        double mIndexOfRefraction;
+        Color mColor;
+        cimg_library::CImg<unsigned char> *mTexture;
+
         Primitive();
         Primitive(nlohmann::json &json);
 
@@ -38,6 +44,16 @@ namespace object
         virtual enum Collision collide(Ray &incoming, double &t, Color &color) const = 0;
 
         // Ray collision helpers (common to all object types)
+        /**
+         * @brief Calculate a ray's reflection based on the surface type,
+         * set the final ray color, and return the reflection type.
+         *
+         * @param incoming
+         * @param intersection
+         * @param normal
+         * @return enum Collision
+         */
+        enum Collision bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const;
 
         /**
          * @brief Handle a specular reflection.
@@ -82,9 +98,6 @@ namespace object
     public:
         Vector mVertices[3];
         Vector mNormal; // Normal vector, determined by winding order of vertices
-        enum Color::Surface mSurface;
-        double mIndexOfRefraction;
-        Color mColor;
 
         Triangle();
         Triangle(const Vector &v0, const Vector &v1, const Vector &v2, enum Color::Surface surface, double indexOfRefraction, const Color &color);
@@ -103,9 +116,6 @@ namespace object
     public:
         Vector mOrigin;
         double mRadius;
-        enum Color::Surface mSurface;
-        double mIndexOfRefraction;
-        Color mColor;
 
         Sphere();
         Sphere(const Vector &origin, double radius, enum Color::Surface surface, double indexOfRefraction, const Color &color);
@@ -120,9 +130,6 @@ namespace object
         Vector mOrigin;
         Vector mWidth, mHeight;
         Vector mNormal;
-        enum Color::Surface mSurface;
-        Color mColor;
-        double mIndexOfRefraction;
 
         Quad();
         Quad(const Vector &origin, const Vector &width, const Vector &height, enum Color::Surface surface, double indexOfRefraction, const Color &color);
@@ -138,9 +145,6 @@ namespace object
     {
     public:
         ModelMatrix mModelMatrix;
-        enum Color::Surface mSurface;
-        Color mColor;
-        double mIndexOfRefraction;
 
         tinyobj::ObjReader &mObj;
 
@@ -180,6 +184,10 @@ public:
     // List of OBJ files, containing their assets
     std::vector<tinyobj::ObjReader> mObjReaders;
     std::vector<std::string> mObjFilenames;
+
+    // List of textures
+    cimg_library::CImgList<unsigned char> mTextures;
+    std::vector<std::string> mTextureFilenames;
 
     Scene();
 

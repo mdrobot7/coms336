@@ -13,6 +13,26 @@ namespace object
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json &json) { (void)json; }
 
+    enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const
+    {
+        switch (mSurface)
+        {
+        case Color::SPECULAR:
+            color = Color(1, 1, 1);
+            return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::DIFFUSE:
+            color = mColor;
+            return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::DIELECTRIC:
+            color = mColor;
+            return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
+        case Color::EMISSIVE:
+            color = mColor;
+            return Collision::ABSORBED; // Emissive surfaces never reflect
+        }
+        throw std::invalid_argument("Collision error");
+    }
+
     bool Primitive::specular(Ray &incoming, const Vector &intersection, const Vector &normal) const
     {
         static const double fuzziness = 0.0; // TODO: Potentially use later
@@ -94,14 +114,6 @@ namespace object
                                   json["vertices"][i]["z"]);
         }
 
-        mSurface = Color::stringToSurface(json["surface"]);
-        if (mSurface == Color::Surface::DIELECTRIC)
-        {
-            mIndexOfRefraction = json["indexOfRefraction"];
-        }
-        int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = Color::intToColor(color);
-
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
         mNormal.vnorm();
@@ -148,22 +160,7 @@ namespace object
         }
 
         // Bounce it
-        switch (mSurface)
-        {
-        case Color::SPECULAR:
-            color = Color(1, 1, 1);
-            return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIFFUSE:
-            color = mColor;
-            return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIELECTRIC:
-            color = mColor;
-            return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::EMISSIVE:
-            color = mColor;
-            return Collision::ABSORBED; // Emissive surfaces never reflect
-        }
-        throw std::invalid_argument("Triangle collision error");
+        return bounce(incoming, intersection, mNormal, color);
     }
 
     Sphere::Sphere() {}
@@ -183,13 +180,6 @@ namespace object
                          json["y"],
                          json["z"]);
         mRadius = json["radius"];
-        mSurface = Color::stringToSurface(json["surface"]);
-        if (mSurface == Color::Surface::DIELECTRIC)
-        {
-            mIndexOfRefraction = json["indexOfRefraction"];
-        }
-        int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = Color::intToColor(color);
     }
 
     enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
@@ -234,22 +224,7 @@ namespace object
         // Bounce it
         Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
         Vector normal = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
-        switch (mSurface)
-        {
-        case Color::SPECULAR:
-            color = Color{1, 1, 1};
-            return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIFFUSE:
-            color = mColor;
-            return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIELECTRIC:
-            color = mColor;
-            return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::EMISSIVE:
-            color = mColor;
-            return Collision::ABSORBED; // Emissive surfaces never reflect
-        }
-        throw std::invalid_argument("Sphere collision error");
+        return bounce(incoming, intersection, normal, color);
     }
 
     Quad::Quad() {}
@@ -279,13 +254,6 @@ namespace object
         mHeight = Vector(json["height"]["x"],
                          json["height"]["y"],
                          json["height"]["z"]);
-        mSurface = Color::stringToSurface(json["surface"]);
-        if (mSurface == Color::Surface::DIELECTRIC)
-        {
-            mIndexOfRefraction = json["indexOfRefraction"];
-        }
-        int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = Color::intToColor(color);
 
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
@@ -327,22 +295,7 @@ namespace object
         }
 
         // Bounce it
-        switch (mSurface)
-        {
-        case Color::SPECULAR:
-            color = Color{1, 1, 1};
-            return (specular(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIFFUSE:
-            color = mColor;
-            return (diffuse(incoming, intersection, mNormal) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::DIELECTRIC:
-            color = mColor;
-            return (dielectric(incoming, intersection, mNormal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
-        case Color::EMISSIVE:
-            color = mColor;
-            return Collision::ABSORBED; // Emissive surfaces never reflect
-        }
-        throw std::invalid_argument("Quad collision error");
+        return bounce(incoming, intersection, mNormal, color);
     }
 
     Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color) : mObj(obj)
@@ -370,13 +323,6 @@ namespace object
             Vector(json["scale"]["x"],
                    json["scale"]["y"],
                    json["scale"]["z"]));
-        mSurface = Color::stringToSurface(json["surface"]);
-        if (mSurface == Color::Surface::DIELECTRIC)
-        {
-            mIndexOfRefraction = json["indexOfRefraction"];
-        }
-        int color = std::stoi((std::string)(json["color"]), 0, 16);
-        mColor = Color::intToColor(color);
     }
 
     enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
@@ -529,6 +475,37 @@ void Scene::load(std::string sceneJsonPath)
         {
             f.close();
             throw std::invalid_argument("Invalid object in JSON");
+        }
+
+        // Fill in common attributes
+        auto &p = mPrimitives.back();
+        p->mSurface = Color::stringToSurface(i["surface"]);
+        if (p->mSurface == Color::Surface::DIELECTRIC)
+        {
+            p->mIndexOfRefraction = i["indexOfRefraction"];
+        }
+        try
+        {
+            int color = std::stoi((std::string)(i["texture"]), 0, 16);
+            p->mColor = Color::intToColor(color);
+        }
+        catch (std::invalid_argument const &)
+        {
+            // Texture is a path instead of a color
+            size_t fileIndex;
+            for (fileIndex = 0; fileIndex < mTextureFilenames.size(); fileIndex++)
+            {
+                if (mTextureFilenames[fileIndex] == i["texture"])
+                {
+                    break;
+                }
+            }
+            if (fileIndex == mTextureFilenames.size())
+            {
+                mTextures.push_back(cimg_library::CImg<unsigned char>(std::string(i["texture"]).c_str()));
+                mTextureFilenames.push_back(i["texture"]);
+            }
+            p->mTexture = &mTextures[fileIndex];
         }
     }
 
