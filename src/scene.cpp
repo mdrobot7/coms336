@@ -8,15 +8,12 @@
 #include "color.hpp"
 #include "common.hpp"
 
-#define TINYOBJLOADER_IMPLEMENTATION // Can only be in ONE cpp file
-#include "tiny_obj_loader.h"
-
 namespace object
 {
     Primitive::Primitive() {}
-    Primitive::Primitive(nlohmann::json json) { (void)json; }
+    Primitive::Primitive(nlohmann::json &json) { (void)json; }
 
-    bool Primitive::specular(Ray &incoming, Vector intersection, Vector normal) const
+    bool Primitive::specular(Ray &incoming, const Vector &intersection, const Vector &normal) const
     {
         static const double fuzziness = 0.0; // TODO: Potentially use later
 
@@ -30,7 +27,7 @@ namespace object
         return (Vector::dot(incoming.mDir, normal) > 0.0);
     }
 
-    bool Primitive::diffuse(Ray &incoming, Vector intersection, Vector normal) const
+    bool Primitive::diffuse(Ray &incoming, const Vector &intersection, const Vector &normal) const
     {
         // Reflect 1 ray with a Lambertian reflection
         incoming.mOrigin = intersection;
@@ -38,7 +35,7 @@ namespace object
         return true;
     }
 
-    bool Primitive::dielectric(Ray &incoming, Vector intersection, Vector normal, double indexOfRefraction) const
+    bool Primitive::dielectric(Ray &incoming, const Vector &intersection, const Vector &normal, double indexOfRefraction) const
     {
         // Check whether we're coming in or out of an object.
         // Normal and incoming vector will be opposite each other.
@@ -72,7 +69,9 @@ namespace object
         return true;
     }
 
-    Triangle::Triangle(Vector &v0, Vector &v1, Vector &v2, enum Color::Surface surface, double indexOfRefraction, Color &color)
+    Triangle::Triangle() {}
+
+    Triangle::Triangle(const Vector &v0, const Vector &v1, const Vector &v2, enum Color::Surface surface, double indexOfRefraction, const Color &color)
     {
         mVertices[0] = v0;
         mVertices[1] = v1;
@@ -86,7 +85,7 @@ namespace object
         mNormal.vnorm();
     }
 
-    Triangle::Triangle(nlohmann::json json)
+    Triangle::Triangle(nlohmann::json &json)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -167,7 +166,9 @@ namespace object
         throw std::invalid_argument("Triangle collision error");
     }
 
-    Sphere::Sphere(Vector &center, double radius, enum Color::Surface surface, double indexOfRefraction, Color &color)
+    Sphere::Sphere() {}
+
+    Sphere::Sphere(const Vector &center, double radius, enum Color::Surface surface, double indexOfRefraction, const Color &color)
     {
         mOrigin = center;
         mRadius = radius;
@@ -176,7 +177,7 @@ namespace object
         mColor = color;
     }
 
-    Sphere::Sphere(nlohmann::json json)
+    Sphere::Sphere(nlohmann::json &json)
     {
         mOrigin = Vector(json["x"],
                          json["y"],
@@ -230,13 +231,6 @@ namespace object
             }
         }
 
-        // DEBUG
-        if (mSurface == Color::Surface::DIELECTRIC)
-        {
-            int foo = 0;
-            foo++;
-        }
-
         // Bounce it
         Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
         Vector normal = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
@@ -249,8 +243,7 @@ namespace object
             color = mColor;
             return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            // color = mColor; // DEBUG
-            color = Color{1, 1, 1};
+            color = mColor;
             return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
             color = mColor;
@@ -259,7 +252,9 @@ namespace object
         throw std::invalid_argument("Sphere collision error");
     }
 
-    Quad::Quad(Vector &origin, Vector &width, Vector &height, enum Color::Surface surface, double indexOfRefraction, Color &color)
+    Quad::Quad() {}
+
+    Quad::Quad(const Vector &origin, const Vector &width, const Vector &height, enum Color::Surface surface, double indexOfRefraction, const Color &color)
     {
         mOrigin = origin;
         mWidth = width;
@@ -273,7 +268,7 @@ namespace object
         mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
     }
 
-    Quad::Quad(nlohmann::json json)
+    Quad::Quad(nlohmann::json &json)
     {
         mOrigin = Vector(json["origin"]["x"],
                          json["origin"]["y"],
@@ -350,15 +345,18 @@ namespace object
         throw std::invalid_argument("Quad collision error");
     }
 
-    Model::Model(tinyobj::ObjReader obj, Vector &origin, Vector &front, Vector &top, Vector &scale) : mObj(obj)
+    Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color) : mObj(obj)
     {
         mOrigin = origin;
         mFront = Vector::svnorm(front);
         mTop = Vector::svnorm(top);
         mScale = scale;
+        mSurface = surface;
+        mIndexOfRefraction = indexOfRefraction;
+        mColor = color;
     }
 
-    Model::Model(nlohmann::json json, tinyobj::ObjReader obj) : mObj(obj)
+    Model::Model(nlohmann::json &json, tinyobj::ObjReader &obj) : mObj(obj)
     {
         mOrigin = Vector(json["origin"]["x"],
                          json["origin"]["y"],
@@ -374,24 +372,82 @@ namespace object
         mScale = Vector(json["scale"]["x"],
                         json["scale"]["y"],
                         json["scale"]["z"]);
+        mSurface = Color::stringToSurface(json["surface"]);
+        if (mSurface == Color::Surface::DIELECTRIC)
+        {
+            mIndexOfRefraction = json["indexOfRefraction"];
+        }
+        int color = std::stoi((std::string)(json["color"]), 0, 16);
+        mColor = Color::intToColor(color);
     }
 
     enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
     {
-        return Collision::ABSORBED;
+        Triangle tri = Triangle(Vector(), Vector(), Vector(), mSurface, mIndexOfRefraction, mColor);
+        Ray closestRay;
+        t = std::numeric_limits<double>::infinity();
+        Collision closestCollision = Collision::MISSED;
+        Ray thisRay = Ray(incoming);
+        double thisT;
+        Color thisColor;
+        Collision thisCollision;
+
+        // Essentially rewrite the main render loop but for only this model
+        auto &attrib = mObj.GetAttrib();
+        auto &shapes = mObj.GetShapes();
+        auto &materials = mObj.GetMaterials();
+        int indexOffset = 0;
+        for (size_t s = 0; s < shapes.size(); s++)
+        {
+            const tinyobj::shape_t &shape = shapes[s];
+            size_t numTriangles = shape.mesh.num_face_vertices.size();
+            for (size_t n = 0; n < numTriangles; n++)
+            {
+                // Every face is going to be 3 vertices (almost always)
+                // Fill in our triangle
+                for (int i = 0; i < 3; i++)
+                {
+                    // Index buffer lookup
+                    tinyobj::index_t index = shape.mesh.indices[indexOffset + i];
+                    // Vertex buffer lookup
+                    for (int j = 0; j < 3; j++)
+                    {
+                        tri.mVertices[i].v[j] = attrib.vertices[3 * size_t(index.vertex_index) + j];
+                    }
+                }
+                // Fill in surface normal assuming CCW winding order (standard for OBJ and OpenGL)
+                tri.mNormal.cross3(Vector::svsub(tri.mVertices[1], tri.mVertices[0]), Vector::svsub(tri.mVertices[2], tri.mVertices[1]));
+                tri.mNormal.vnorm();
+
+                thisCollision = tri.collide(thisRay, thisT, thisColor);
+                if (thisCollision != Collision::MISSED && thisT < t)
+                {
+                    // Found a closer collision
+                    closestRay = Ray(thisRay);
+                    t = thisT;
+                    color = Color(thisColor);
+                    closestCollision = thisCollision;
+                }
+                indexOffset += 3;
+            }
+        }
+
+        incoming = Ray(closestRay);
+        // t, color set during execution
+        return closestCollision;
     }
 
     Camera::Camera() {}
 
-    Camera::Camera(Vector &origin, Vector &front, Vector &top, double focalLength)
+    Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength)
     {
         mOrigin = origin;
-        mFront = front.vnorm();
-        mTop = top.vnorm();
+        mFront = Vector::svnorm(front);
+        mTop = Vector::svnorm(top);
         mFocalLength = focalLength;
     }
 
-    Camera::Camera(nlohmann::json json)
+    Camera::Camera(nlohmann::json &json)
     {
         mOrigin = Vector(json["origin"]["x"],
                          json["origin"]["y"],

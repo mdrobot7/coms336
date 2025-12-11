@@ -23,7 +23,7 @@ namespace object
         static constexpr double sRefractionGlass = 1.458;
 
         Primitive();
-        Primitive(nlohmann::json json);
+        Primitive(nlohmann::json &json);
 
         virtual ~Primitive() {};
 
@@ -48,7 +48,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool specular(Ray &incoming, Vector intersection, Vector normal) const;
+        bool specular(Ray &incoming, const Vector &intersection, const Vector &normal) const;
 
         /**
          * @brief Handle a diffuse reflection.
@@ -59,7 +59,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool diffuse(Ray &incoming, Vector intersection, Vector normal) const;
+        bool diffuse(Ray &incoming, const Vector &intersection, const Vector &normal) const;
 
         /**
          * @brief Handle a dielectric reflection/refraction.
@@ -68,7 +68,7 @@ namespace object
          * @return true If the ray should keep bouncing
          * @return false If the ray has been absorbed
          */
-        bool dielectric(Ray &incoming, Vector intersection, Vector normal, double indexOfRefraction) const;
+        bool dielectric(Ray &incoming, const Vector &intersection, const Vector &normal, double indexOfRefraction) const;
     };
 
     /**
@@ -86,8 +86,9 @@ namespace object
         double mIndexOfRefraction;
         Color mColor;
 
-        Triangle(Vector &v0, Vector &v1, Vector &v2, enum Color::Surface surface, double indexOfRefraction, Color &color);
-        Triangle(nlohmann::json json);
+        Triangle();
+        Triangle(const Vector &v0, const Vector &v1, const Vector &v2, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Triangle(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
@@ -106,8 +107,9 @@ namespace object
         double mIndexOfRefraction;
         Color mColor;
 
-        Sphere(Vector &origin, double radius, enum Color::Surface surface, double indexOfRefraction, Color &color);
-        Sphere(nlohmann::json json);
+        Sphere();
+        Sphere(const Vector &origin, double radius, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Sphere(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
@@ -122,8 +124,9 @@ namespace object
         Color mColor;
         double mIndexOfRefraction;
 
-        Quad(Vector &origin, Vector &width, Vector &height, enum Color::Surface surface, double indexOfRefraction, Color &color);
-        Quad(nlohmann::json json);
+        Quad();
+        Quad(const Vector &origin, const Vector &width, const Vector &height, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Quad(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
 
@@ -138,11 +141,14 @@ namespace object
         Vector mFront;
         Vector mTop;
         Vector mScale; // [scaleX, scaleY, scaleZ]
+        enum Color::Surface mSurface;
+        Color mColor;
+        double mIndexOfRefraction;
 
         tinyobj::ObjReader &mObj;
 
-        Model(tinyobj::ObjReader obj, Vector &origin, Vector &front, Vector &top, Vector &scale);
-        Model(nlohmann::json json, tinyobj::ObjReader obj);
+        Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Model(nlohmann::json &json, tinyobj::ObjReader &obj);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
     };
@@ -161,8 +167,8 @@ namespace object
         double mFocalLength;
 
         Camera();
-        Camera(Vector &origin, Vector &front, Vector &top, double focalLength);
-        Camera(nlohmann::json json);
+        Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength);
+        Camera(nlohmann::json &json);
     };
 }; // namespace Object
 
