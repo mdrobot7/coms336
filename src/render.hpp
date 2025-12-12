@@ -46,9 +46,8 @@ private:
 
     int mMaxBounces; // Max bounces per ray before we call it black
 
-    std::vector<std::vector<std::vector<Ray>>> mRays; // Vector of Rays for each pixel in the screen
-    std::mutex mRaysLock;
     Vector mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Width/heights are normalized, origin is top left corner
+    Vector mPinhole;                                // Location of the pinhole camera
 
     /**
      * @brief Job for an individual thread in the thread
@@ -74,6 +73,12 @@ private:
      * in the image plane specified by x, y.
      */
     Vector &getImgPlanePixel(int y, int x);
+
+    /**
+     * @brief Get a vector that points to a random location in
+     * the pixel in the image plane specified by x, y.
+     */
+    Vector getImgPlanePixelRandom(int y, int x);
 
     /**
      * @brief Get a set of mAntiAliasingLevel vectors randomly

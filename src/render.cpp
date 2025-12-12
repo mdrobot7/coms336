@@ -36,6 +36,8 @@ Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int j
     srand(time(NULL));
 
     setupImgPlane();
+    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
+    mPinhole = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
 }
 
 Render::~Render()
@@ -45,28 +47,7 @@ Render::~Render()
 
 int Render::run()
 {
-    // Spawn our rays from the camera.
-    // mAntiAliasingLevel rays per pixel.
-    std::cout << "Creating rays..." << std::endl;
-    mRays.resize(mHeight);
-    Vector imagePlaneVecs[mAntiAliasingLevel];
-    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
-    Vector pinhole = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
-    for (int y = 0; y < mHeight; y++)
-    {
-        mRays[y].resize(mWidth);
-        for (int x = 0; x < mWidth; x++)
-        {
-            mRays[y][x].resize(mAntiAliasingLevel);
-            getImgPlanePixelMultiple(imagePlaneVecs, y, x);
-            for (int i = 0; i < mAntiAliasingLevel; i++)
-            {
-                Vector vRay = Vector::svsub(imagePlaneVecs[i], pinhole).vnorm();
-                mRays[y][x][i] = Ray(imagePlaneVecs[i], vRay);
-            }
-        }
-    }
-    std::cout << "Created " << mRays.size() * mRays[0].size() * mRays[0][0].size() << " rays." << std::endl;
+    std::cout << "Using " << mHeight * mWidth * mAntiAliasingLevel << " rays." << std::endl;
 
     // Create a pool of threads to dispatch jobs to.
     // A job is just a pixel, really. Could even do it
@@ -150,7 +131,6 @@ int Render::save(std::string filename)
 
 void Render::renderPixel()
 {
-    std::vector<Ray> rays;
     while (!mKillThreads)
     {
         mNextPixelLock.lock();
@@ -171,15 +151,13 @@ void Render::renderPixel()
         }
         mNextPixelLock.unlock();
 
-        mRaysLock.lock();
-        rays = mRays[nextY][nextX];
-        mRaysLock.unlock();
-
         Color pixelColor = {0.0, 0.0, 0.0};
-        for (Ray r : rays)
+        for (int i = 0; i < mAntiAliasingLevel; i++)
         {
+            Vector v = getImgPlanePixelRandom(nextY, nextX);
+            Ray baseRay = Ray(v, Vector::svsub(v, mPinhole).vnorm());
+
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
-            Ray baseRay = Ray(r);
             for (int i = 0; i < mMaxBounces; i++)
             {
                 object::Primitive::Collision closestCollision = object::Primitive::Collision::MISSED;
@@ -282,6 +260,15 @@ Vector &Render::getImgPlanePixel(int y, int x)
 {
     Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, y + 0.5));
     return ret.vadd(ret, Vector::svscale(mPlaneWidth, x + 0.5));
+}
+
+Vector Render::getImgPlanePixelRandom(int y, int x)
+{
+    double dx = x + (rand() / ((double)RAND_MAX + 1));
+    double dy = y + (rand() / ((double)RAND_MAX + 1));
+    Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
+    ret.vadd(Vector::svscale(mPlaneWidth, dx));
+    return ret;
 }
 
 void Render::getImgPlanePixelMultiple(Vector vectors[], int y, int x)
