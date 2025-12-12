@@ -15,6 +15,13 @@ Color::Color(Vector &vec)
     v[2] = vec[2];
 }
 
+Color::Color(Vector vec)
+{
+    v[0] = vec[0];
+    v[1] = vec[1];
+    v[2] = vec[2];
+}
+
 enum Color::Surface Color::stringToSurface(std::string str)
 {
     auto val = sSurfaceMap.find(str);

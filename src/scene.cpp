@@ -87,14 +87,18 @@ namespace object
 
     Triangle::Triangle() {}
 
-    Triangle::Triangle(const Vector &v0, const Vector &v1, const Vector &v2, enum Color::Surface surface, double indexOfRefraction, const Color &color)
+    Triangle::Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface surface, double indexOfRefraction, const Color &color)
     {
-        mVertices[0] = v0;
-        mVertices[1] = v1;
-        mVertices[2] = v2;
+        mVertices[0] = vertices[0];
+        mVertices[1] = vertices[1];
+        mVertices[2] = vertices[2];
+        mTexcoords[0] = texcoords[0];
+        mTexcoords[1] = texcoords[1];
+        mTexcoords[2] = texcoords[2];
         mSurface = surface;
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
+        mTexture = NULL;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
@@ -108,7 +112,11 @@ namespace object
             mVertices[i] = Vector(json["vertices"][i]["x"],
                                   json["vertices"][i]["y"],
                                   json["vertices"][i]["z"]);
+            mTexcoords[i] = Vector(json["texcoords"][i]["u"],
+                                   json["texcoords"][i]["v"],
+                                   0.0);
         }
+        mTexture = NULL;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
@@ -192,6 +200,7 @@ namespace object
         mSurface = surface;
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
+        mTexture = NULL;
     }
 
     Sphere::Sphere(nlohmann::json &json)
@@ -200,6 +209,7 @@ namespace object
                          json["y"],
                          json["z"]);
         mRadius = json["radius"];
+        mTexture = NULL;
     }
 
     enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
@@ -265,8 +275,9 @@ namespace object
         }
 
         // Convert intersection point to spherical coordinates
-        double phi = atan2(-mRadius * intersection[V_Z], intersection[V_X]) + M_PI;
-        double theta = acos(-intersection[V_Y]);
+        Vector unitSphereIntersection = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
+        double phi = atan2(-unitSphereIntersection[V_Z], unitSphereIntersection[V_X]) + M_PI;
+        double theta = acos(-unitSphereIntersection[V_Y]);
 
         double u = phi / (2.0 * M_PI);
         double v = theta / M_PI;
@@ -283,6 +294,7 @@ namespace object
         mSurface = surface;
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
+        mTexture = NULL;
 
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
@@ -300,6 +312,7 @@ namespace object
         mHeight = Vector(json["height"]["x"],
                          json["height"]["y"],
                          json["height"]["z"]);
+        mTexture = NULL;
 
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
@@ -355,8 +368,14 @@ namespace object
 
     void Quad::textureLookup(double alpha, double beta, Color &color) const
     {
+        if (!mTexture)
+        {
+            color = mColor;
+            return;
+        }
+
         // Intersection testing gives us alpha and beta, which are
-        // the same as u and v.
+        // the same as u and v. mOrigin is at the top left of the image.
         color = mTexture->getUv(alpha, beta);
     }
 
@@ -389,7 +408,11 @@ namespace object
 
     enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
     {
-        Triangle tri = Triangle(Vector(), Vector(), Vector(), mSurface, mIndexOfRefraction, mColor);
+        Triangle tri = Triangle();
+        tri.mSurface = mSurface;
+        tri.mIndexOfRefraction = mIndexOfRefraction;
+        tri.mColor = mColor;
+
         Ray closestRay;
         t = std::numeric_limits<double>::infinity();
         Collision closestCollision = Collision::MISSED;
@@ -476,6 +499,14 @@ namespace object
 
 Scene::Scene() {}
 
+Scene::~Scene()
+{
+    for (STBImage i : mTextures)
+    {
+        i.free();
+    }
+}
+
 void Scene::load(std::string sceneJsonPath)
 {
     std::ifstream f(sceneJsonPath);
@@ -550,7 +581,6 @@ void Scene::load(std::string sceneJsonPath)
         {
             int color = std::stoi((std::string)(i["texture"]), 0, 16);
             p->mColor = Color::intToColor(color);
-            p->mTexture = NULL;
         }
         catch (std::invalid_argument const &)
         {

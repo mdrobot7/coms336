@@ -79,8 +79,8 @@
                 "y": 100,
                 "z": 0
             },
-            "surface": "diffuse",
-            "texture": "0xC9C9C9"
+            "surface": "emissive",
+            "texture": "./assets/duwe_react.jpg"
         },
         {
             "_comment": "right wall",
@@ -152,7 +152,7 @@
             "z": -30,
             "radius": 10,
             "surface": "diffuse",
-            "texture": "0xFF0000"
+            "texture": "./assets/duwe_react.jpg"
         },
         {
             "type": "sphere",
@@ -192,34 +192,22 @@
                     "z": -80
                 }
             ],
+            "texcoords": [
+                {
+                    "u": 0,
+                    "v": 0
+                },
+                {
+                    "u": 1,
+                    "v": 0
+                },
+                {
+                    "u": 1,
+                    "v": 1
+                }
+            ],
             "surface": "diffuse",
-            "texture": "0x00FF00"
-        },
-        {
-            "type": "obj",
-            "path": "./assets/suzanne.obj",
-            "surface": "diffuse",
-            "texture": "0x3D7DE3",
-            "origin": {
-                "x": -30,
-                "y": 20,
-                "z": 5
-            },
-            "front": {
-                "x": 0,
-                "y": 0,
-                "z": 1
-            },
-            "top": {
-                "x": 0,
-                "y": 1,
-                "z": 0
-            },
-            "scale": {
-                "x": 10,
-                "y": 10,
-                "z": 10
-            }
+            "texture": "./assets/duwe_react.jpg"
         }
     ]
 }

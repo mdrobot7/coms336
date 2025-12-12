@@ -101,7 +101,7 @@ namespace object
         Vector mNormal; // Normal vector, determined by winding order of vertices
 
         Triangle();
-        Triangle(const Vector &v0, const Vector &v1, const Vector &v2, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Triangle(Vector vertices[3], Vector texcoords[3], enum Color::Surface surface, double indexOfRefraction, const Color &color);
         Triangle(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
@@ -198,6 +198,7 @@ public:
     std::vector<std::string> mTextureFilenames;
 
     Scene();
+    ~Scene();
 
     /**
      * @brief Load the scene data from a JSON file and

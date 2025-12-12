@@ -8,12 +8,11 @@
 class STBImage
 {
 public:
-    unsigned char *mImage;
+    const unsigned char *mImage;
     int mWidth, mHeight, mChannels;
 
     STBImage();
     STBImage(std::string path);
-    ~STBImage();
 
     /**
      * @brief Get a pixel from the image.
@@ -38,4 +37,9 @@ public:
      * Image is in RGB(A) order.
      */
     double getDbl(int y, int x, int color);
+
+    /**
+     * @brief Frees the memory allocated for the image.
+     */
+    void free();
 };

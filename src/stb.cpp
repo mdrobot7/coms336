@@ -1,4 +1,5 @@
 #include "stb.hpp"
+#include "common.hpp"
 
 #include <stdexcept>
 
@@ -10,44 +11,38 @@ STBImage::STBImage() {}
 STBImage::STBImage(std::string path)
 {
     mImage = stbi_load(path.c_str(), &mWidth, &mHeight, &mChannels, 0);
-}
-
-STBImage::~STBImage()
-{
-    stbi_image_free(mImage);
+    if (mImage == NULL)
+    {
+        throw std::runtime_error("Unable to load file");
+    }
 }
 
 Color STBImage::get(int y, int x)
 {
-    if (y >= mHeight || x >= mWidth)
-    {
-        throw std::invalid_argument("Indices out of range.");
-    }
-    unsigned char *offset = mImage + y * mHeight + x * mChannels;
-    return (Color)(Vector(offset[0], offset[1], offset[2]).vnorm());
+    y = CLAMP(y, 0, mHeight - 1);
+    x = CLAMP(x, 0, mWidth - 1);
+    int widthBytes = mWidth * mChannels;
+    const unsigned char *offset = mImage + y * widthBytes + x * mChannels;
+    return Color(Vector(offset[0] / 255.0, offset[1] / 255.0, offset[2] / 255.0));
 }
 
 Color STBImage::getUv(double u, double v)
 {
-    return get(u * (mWidth - 1), v * (mHeight - 1));
+    return get(v * (mHeight - 1), u * (mWidth - 1));
 }
 
 unsigned char STBImage::get(int y, int x, int color)
 {
-    if (y >= mHeight || x >= mWidth || color >= mChannels)
-    {
-        throw std::invalid_argument("Indices out of range.");
-    }
-    unsigned char *offset = mImage + y * mHeight + x * mChannels + color;
-    return *offset;
+    return get(y, x)[color];
 }
 
 double STBImage::getDbl(int y, int x, int color)
 {
-    if (y >= mHeight || x >= mWidth || color >= mChannels)
-    {
-        throw std::invalid_argument("Indices out of range.");
-    }
-    unsigned char *offset = mImage + y * mHeight + x * mChannels + color;
-    return *offset / 255.0;
+    return get(y, x, color) / 255.0;
+}
+
+void STBImage::free()
+{
+    // Destructors and copy constructors caused problems with accidental freeing
+    stbi_image_free((void *)mImage);
 }

@@ -13,6 +13,7 @@ public:
 
     // Explicit conversion constructor, since it's a downcast
     Color(Vector &vec);
+    Color(Vector vec);
 
     enum Surface
     {
