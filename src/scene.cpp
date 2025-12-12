@@ -18,16 +18,12 @@ namespace object
         switch (mSurface)
         {
         case Color::SPECULAR:
-            color = Color(1, 1, 1);
             return (specular(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIFFUSE:
-            color = mColor;
             return (diffuse(incoming, intersection, normal) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::DIELECTRIC:
-            color = mColor;
             return (dielectric(incoming, intersection, normal, mIndexOfRefraction) ? Collision::REFLECTED : Collision::ABSORBED);
         case Color::EMISSIVE:
-            color = mColor;
             return Collision::ABSORBED; // Emissive surfaces never reflect
         }
         throw std::invalid_argument("Collision error");
@@ -159,8 +155,32 @@ namespace object
             return Collision::MISSED;
         }
 
+        if (mSurface == Color::SPECULAR || mSurface == Color::DIELECTRIC)
+        {
+            color = Color(1, 1, 1);
+        }
+        else
+        {
+            textureLookup(alpha, beta, gamma, color);
+        }
+
         // Bounce it
         return bounce(incoming, intersection, mNormal, color);
+    }
+
+    void Triangle::textureLookup(double alpha, double beta, double gamma, Color &color) const
+    {
+        if (!mTexture)
+        {
+            color = mColor;
+            return;
+        }
+
+        // Thanks stack overflow https://stackoverflow.com/questions/17164376/inferring-u-v-for-a-point-in-a-triangle-from-vertex-u-vs
+        double u = alpha * mTexcoords[0][0] + beta * mTexcoords[1][0] + gamma * mTexcoords[2][0];
+        double v = alpha * mTexcoords[0][1] + beta * mTexcoords[1][1] + gamma * mTexcoords[2][1];
+
+        color = mTexture->getUv(u, v);
     }
 
     Sphere::Sphere() {}
@@ -221,10 +241,36 @@ namespace object
             }
         }
 
-        // Bounce it
         Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
         Vector normal = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
+        if (mSurface == Color::SPECULAR || mSurface == Color::DIELECTRIC)
+        {
+            color = Color(1, 1, 1);
+        }
+        else
+        {
+            textureLookup(intersection, color);
+        }
+
+        // Bounce it
         return bounce(incoming, intersection, normal, color);
+    }
+
+    void Sphere::textureLookup(Vector &intersection, Color &color) const
+    {
+        if (!mTexture)
+        {
+            color = mColor;
+            return;
+        }
+
+        // Convert intersection point to spherical coordinates
+        double phi = atan2(-mRadius * intersection[V_Z], intersection[V_X]) + M_PI;
+        double theta = acos(-intersection[V_Y]);
+
+        double u = phi / (2.0 * M_PI);
+        double v = theta / M_PI;
+        color = mTexture->getUv(u, v);
     }
 
     Quad::Quad() {}
@@ -294,8 +340,24 @@ namespace object
             return Collision::MISSED;
         }
 
+        if (mSurface == Color::SPECULAR || mSurface == Color::DIELECTRIC)
+        {
+            color = Color(1, 1, 1);
+        }
+        else
+        {
+            textureLookup(alpha, beta, color);
+        }
+
         // Bounce it
         return bounce(incoming, intersection, mNormal, color);
+    }
+
+    void Quad::textureLookup(double alpha, double beta, Color &color) const
+    {
+        // Intersection testing gives us alpha and beta, which are
+        // the same as u and v.
+        color = mTexture->getUv(alpha, beta);
     }
 
     Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color) : mObj(obj)
@@ -488,6 +550,7 @@ void Scene::load(std::string sceneJsonPath)
         {
             int color = std::stoi((std::string)(i["texture"]), 0, 16);
             p->mColor = Color::intToColor(color);
+            p->mTexture = NULL;
         }
         catch (std::invalid_argument const &)
         {

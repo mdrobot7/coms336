@@ -16,9 +16,16 @@ public:
     ~STBImage();
 
     /**
-     * @brief Get a color vector from the image.
+     * @brief Get a pixel from the image.
      */
     Color get(int y, int x);
+
+    /**
+     * @brief Get a pixel from the image using
+     * texture (u, v) coordinates. u and v are in the
+     * range [0, 1.0].
+     */
+    Color getUv(double u, double v);
 
     /**
      * @brief Get a color byte [0-255] from the image.
@@ -30,5 +37,5 @@ public:
      * @brief Get a color double [0-1.0] from the image.
      * Image is in RGB(A) order.
      */
-    double get_dbl(int y, int x, int color);
+    double getDbl(int y, int x, int color);
 };

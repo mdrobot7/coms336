@@ -97,6 +97,7 @@ namespace object
     {
     public:
         Vector mVertices[3];
+        Vector mTexcoords[3];
         Vector mNormal; // Normal vector, determined by winding order of vertices
 
         Triangle();
@@ -104,6 +105,9 @@ namespace object
         Triangle(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+
+    private:
+        void textureLookup(double alpha, double beta, double gamma, Color &color) const;
     };
 
     /**
@@ -122,6 +126,9 @@ namespace object
         Sphere(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+
+    private:
+        void textureLookup(Vector &intersection, Color &color) const;
     };
 
     class Quad : public Primitive
@@ -138,6 +145,7 @@ namespace object
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
 
     private:
+        void textureLookup(double alpha, double beta, Color &color) const;
         Vector mW; // Used for intersection checking
     };
 
