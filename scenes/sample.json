@@ -208,6 +208,32 @@
             ],
             "surface": "diffuse",
             "texture": "./assets/duwe_react.jpg"
+        },
+        {
+            "type": "obj",
+            "path": "./assets/suzanne.obj",
+            "surface": "diffuse",
+            "texture": "0x3D7DE3",
+            "origin": {
+                "x": -30,
+                "y": 20,
+                "z": 5
+            },
+            "front": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+            },
+            "top": {
+                "x": 0,
+                "y": 1,
+                "z": 0
+            },
+            "scale": {
+                "x": 10,
+                "y": 10,
+                "z": 10
+            }
         }
     ]
 }

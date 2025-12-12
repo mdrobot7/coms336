@@ -147,16 +147,20 @@ namespace object
 
         Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
 
-        // Split triangle into subtriangles, calculate normals
-        Vector normA, normB, normC;
-        normA.cross3(Vector::svsub(mVertices[2], mVertices[1]), Vector::svsub(intersection, mVertices[1]));
-        normB.cross3(Vector::svsub(mVertices[0], mVertices[2]), Vector::svsub(intersection, mVertices[2]));
-        normC.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(intersection, mVertices[0]));
+        Vector v0 = Vector::svsub(mVertices[1], mVertices[0]);
+        Vector v1 = Vector::svsub(mVertices[2], mVertices[0]);
+        Vector v2 = Vector::svsub(intersection, mVertices[0]);
 
-        // Calculate barycentrics
-        double alpha = Vector::dot(mNormal, normA) / Vector::dot(mNormal, mNormal);
-        double beta = Vector::dot(mNormal, normB) / Vector::dot(mNormal, mNormal);
-        double gamma = Vector::dot(mNormal, normC) / Vector::dot(mNormal, mNormal);
+        float d00 = Vector::dot(v0, v0);
+        float d01 = Vector::dot(v0, v1);
+        float d11 = Vector::dot(v1, v1);
+        float d20 = Vector::dot(v2, v0);
+        float d21 = Vector::dot(v2, v1);
+        float denom = d00 * d11 - d01 * d01;
+        double beta = (d11 * d20 - d01 * d21) / denom;
+        double gamma = (d00 * d21 - d01 * d20) / denom;
+        double alpha = 1.0f - beta - gamma;
+
         if (alpha < 0.0 || beta < 0.0 || gamma < 0.0)
         {
             // Did not intersect
@@ -412,6 +416,7 @@ namespace object
         tri.mSurface = mSurface;
         tri.mIndexOfRefraction = mIndexOfRefraction;
         tri.mColor = mColor;
+        tri.mTexture = NULL;
 
         Ray closestRay;
         t = std::numeric_limits<double>::infinity();
