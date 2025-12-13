@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "ray.hpp"
 #include "boundingBox.hpp"
 #include "scene.hpp"
@@ -8,10 +9,11 @@ class BoundingVolumeHierarchy
 {
 public:
     object::Primitive *mPrimitive;
-    BoundingBox bbox;
+    BoundingBox mBbox;
 
     BoundingVolumeHierarchy();
-    BoundingVolumeHierarchy(object::Primitive primitives[]);
+    BoundingVolumeHierarchy(std::vector<object::Primitive> &primitives);
+    BoundingVolumeHierarchy(std::vector<object::Primitive> &primitives, size_t start, size_t end);
 
     /**
      * @brief Checks if a ray hits a bounding volume. If so,
@@ -26,6 +28,8 @@ public:
     object::Primitive *intersects(Ray &r);
 
 private:
-    BoundingVolumeHierarchy *left;
-    BoundingVolumeHierarchy *right;
+    BoundingVolumeHierarchy *mLeft;
+    BoundingVolumeHierarchy *mRight;
+
+    void destroySubtree(BoundingVolumeHierarchy *subtree);
 };

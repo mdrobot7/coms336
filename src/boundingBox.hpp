@@ -12,7 +12,31 @@ public:
     BoundingBox();
     BoundingBox(double minX, double maxX, double minY, double maxY, double minZ, double maxZ);
 
+    /**
+     * @brief Returns true if a ray intersects with this
+     * bounding box.
+     */
     bool intersectsBox(Ray &r);
+
+    /**
+     * @brief Merges another bounding box into this one.
+     * Returns a reference to this.
+     */
+    BoundingBox &merge(const BoundingBox &other);
+
+    /**
+     * @brief Return the largest axis of this bounding box.
+     */
+    int largestAxis();
+
+    /**
+     * @brief Compare two bounding boxes along an axis. Return
+     * true if a's min is less than b's min. False otherwise.
+     */
+    static bool compare(const BoundingBox &a, const BoundingBox &b, int axis);
+    static bool compare_x(const BoundingBox &a, const BoundingBox &b);
+    static bool compare_y(const BoundingBox &a, const BoundingBox &b);
+    static bool compare_z(const BoundingBox &a, const BoundingBox &b);
 
 private:
     /**
