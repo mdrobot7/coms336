@@ -4,6 +4,7 @@
 #include "ray.hpp"
 #include "boundingBox.hpp"
 #include "scene.hpp"
+#include "color.hpp"
 
 class BoundingVolumeHierarchy
 {
@@ -26,7 +27,7 @@ public:
      * If any level of the BVH results in misses for both the
      * left and right child the method returns NULL.
      */
-    object::Primitive *intersects(Ray &r);
+    object::Primitive::Collision intersects(Ray &incoming, double &t, Color &color);
 
 private:
     BoundingVolumeHierarchy *mLeft;

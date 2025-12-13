@@ -1,4 +1,6 @@
 #include "bvh.hpp"
+#include "color.hpp"
+#include "scene.hpp"
 
 #include <algorithm>
 #include <typeinfo>
@@ -73,29 +75,60 @@ BoundingVolumeHierarchy::~BoundingVolumeHierarchy()
     destroySubtree(this);
 }
 
-object::Primitive *BoundingVolumeHierarchy::intersects(Ray &r)
+object::Primitive::Collision BoundingVolumeHierarchy::intersects(Ray &incoming, double &t, Color &color)
 {
+    // Traverse down any nodes that intersect the ray
+    // (regardless of what side of the tree they're on).
+    // If a leaf node is reached run the intersection test
+    // and record the results.
+    //
+    // As you traverse, ignore any nodes with a farther
+    // intersection than the one you already have. If you
+    // find one closer you have to go all the way down until
+    // you get a miss on the bounding volume or you reach
+    // a primitive.
+
+    object::Primitive::Collision collision = object::Primitive::Collision::MISSED;
     if (mPrimitive)
     {
-        // Reached the bottom of the BVH
-        return mPrimitive;
+        // Reached a leaf
+        Ray thisIncoming = Ray(incoming);
+        double thisT = t;
+        Color thisColor = Color(color);
+        collision = mPrimitive->collide(thisIncoming, thisT, thisColor);
+        if (collision != object::Primitive::Collision::MISSED && thisT < t)
+        {
+            // We hit something closer than our current mark, so remember it
+            t = thisT;
+            color = Color(thisColor);
+            return collision;
+        }
+        return object::Primitive::Collision::MISSED;
     }
 
-    // Traverse down, making sure to traverse the subtree with
-    // the *closer* bounding box. Handles cases where the ray
-    // hits both bounding box subtrees.
     double tLeft, tRight;
-    bool intLeft = mLeft->mBbox.intersectsBox(r, tLeft);
-    bool intRight = mRight->mBbox.intersectsBox(r, tRight);
-    if (intLeft && tLeft < tRight)
+    bool intLeft = mLeft->mBbox.intersectsBox(incoming, tLeft);
+    bool intRight = mRight->mBbox.intersectsBox(incoming, tRight);
+
+    // TODO: ignore nodes that are closer than t
+    if (intLeft)
     {
-        return mLeft->intersects(r);
+        collision = mLeft->intersects(incoming, t, color);
     }
-    if (intRight && tRight < tLeft)
+    if (intRight)
     {
-        return mRight->intersects(r);
+        Ray thisIncoming = Ray(incoming);
+        double thisT = t;
+        Color thisColor = Color(color);
+        object::Primitive::Collision rightCollision = mRight->intersects(thisIncoming, thisT, thisColor);
+        if (rightCollision != object::Primitive::Collision::MISSED && thisT < t)
+        {
+            t = thisT;
+            color = Color(thisColor);
+            collision = rightCollision;
+        }
     }
-    return NULL;
+    return collision;
 }
 
 void BoundingVolumeHierarchy::destroySubtree(BoundingVolumeHierarchy *subtree)

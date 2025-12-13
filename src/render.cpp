@@ -162,19 +162,9 @@ void Render::renderPixel()
             for (int i = 0; i < mMaxBounces; i++)
             {
                 // Check BVH
-                object::Primitive *p = mBvh.intersects(baseRay);
-                if (!p)
-                {
-                    // Missed everything, meaning we never hit a light and
-                    // got absorbed. Give up and leave the pixel black
-                    break;
-                }
-
-                // If BVH finds something, the returned primitive is guaranteed to be
-                // a hit (of some sort) and *the closest hit*. No need for multiple tests.
+                double t = std::numeric_limits<double>::infinity();
                 Color color;
-                double t;
-                object::Primitive::Collision collision = p->collide(baseRay, t, color);
+                object::Primitive::Collision collision = mBvh.intersects(baseRay, t, color);
 
                 if (collision == object::Primitive::Collision::REFLECTED)
                 {
@@ -190,7 +180,8 @@ void Render::renderPixel()
                 }
                 else if (collision == object::Primitive::Collision::MISSED)
                 {
-                    // BVH isn't a "tight fit", so we may still miss
+                    // Missed everything, meaning we never hit a light and
+                    // got absorbed. Give up and leave the pixel black
                     break;
                 }
             }

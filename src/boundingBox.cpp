@@ -42,7 +42,8 @@ bool BoundingBox::intersectsBox(Ray &r, double &t)
         minMaxInt = thisMaxInt < minMaxInt ? thisMaxInt : minMaxInt;
     }
 
-    // Check if the ranges overlap and that the intersection isn't behind us
+    // Check if the ranges overlap, also ignore boxes that are *fully*
+    // behind the ray
     if (maxMinInt < minMaxInt && minMaxInt > 0)
     {
         t = maxMinInt;
