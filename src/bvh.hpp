@@ -12,8 +12,9 @@ public:
     BoundingBox mBbox;
 
     BoundingVolumeHierarchy();
-    BoundingVolumeHierarchy(std::vector<object::Primitive> &primitives);
-    BoundingVolumeHierarchy(std::vector<object::Primitive> &primitives, size_t start, size_t end);
+    BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives);
+    BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives, size_t start, size_t end);
+    ~BoundingVolumeHierarchy();
 
     /**
      * @brief Checks if a ray hits a bounding volume. If so,
@@ -32,4 +33,8 @@ private:
     BoundingVolumeHierarchy *mRight;
 
     void destroySubtree(BoundingVolumeHierarchy *subtree);
+
+    static bool compare_x(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
+    static bool compare_y(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
+    static bool compare_z(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
 };

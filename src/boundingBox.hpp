@@ -14,9 +14,10 @@ public:
 
     /**
      * @brief Returns true if a ray intersects with this
-     * bounding box.
+     * bounding box. Also returns the time (t) that the
+     * ray hits the box, or infinity if no boxes were hit.
      */
-    bool intersectsBox(Ray &r);
+    bool intersectsBox(Ray &r, double &t);
 
     /**
      * @brief Merges another bounding box into this one.
@@ -34,9 +35,6 @@ public:
      * true if a's min is less than b's min. False otherwise.
      */
     static bool compare(const BoundingBox &a, const BoundingBox &b, int axis);
-    static bool compare_x(const BoundingBox &a, const BoundingBox &b);
-    static bool compare_y(const BoundingBox &a, const BoundingBox &b);
-    static bool compare_z(const BoundingBox &a, const BoundingBox &b);
 
 private:
     /**

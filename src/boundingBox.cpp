@@ -25,7 +25,7 @@ BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, dou
     mIntersections[V_Z][1] = maxZ + sPadding;
 }
 
-bool BoundingBox::intersectsBox(Ray &r)
+bool BoundingBox::intersectsBox(Ray &r, double &t)
 {
     double minMaxInt = std::numeric_limits<double>::infinity();
     double maxMinInt = -std::numeric_limits<double>::infinity();
@@ -43,7 +43,13 @@ bool BoundingBox::intersectsBox(Ray &r)
     }
 
     // Check if the ranges overlap and that the intersection isn't behind us
-    return maxMinInt < minMaxInt && minMaxInt > 0;
+    if (maxMinInt < minMaxInt && minMaxInt > 0)
+    {
+        t = maxMinInt;
+        return true;
+    }
+    t = std::numeric_limits<double>::infinity();
+    return false;
 }
 
 double BoundingBox::intersectionTime(Ray &r, double val, int axis)
@@ -65,6 +71,7 @@ BoundingBox &BoundingBox::merge(const BoundingBox &other)
             }
         }
     }
+    return *this;
 }
 
 int BoundingBox::largestAxis()
@@ -86,19 +93,4 @@ int BoundingBox::largestAxis()
 bool BoundingBox::compare(const BoundingBox &a, const BoundingBox &b, int axis)
 {
     return a.mIntersections[axis][0] < b.mIntersections[axis][0];
-}
-
-bool BoundingBox::compare_x(const BoundingBox &a, const BoundingBox &b)
-{
-    compare(a, b, V_X);
-}
-
-bool BoundingBox::compare_y(const BoundingBox &a, const BoundingBox &b)
-{
-    compare(a, b, V_Y);
-}
-
-bool BoundingBox::compare_z(const BoundingBox &a, const BoundingBox &b)
-{
-    compare(a, b, V_Z);
 }
