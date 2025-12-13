@@ -8,6 +8,7 @@
 #include "vector.hpp"
 #include "ray.hpp"
 #include "color.hpp"
+#include "boundingBox.hpp"
 
 namespace object
 {
@@ -42,6 +43,13 @@ namespace object
          * @return enum Collision Type of collision that occurred
          */
         virtual enum Collision collide(Ray &incoming, double &t, Color &color) const = 0;
+
+        /**
+         * @brief Return the bounding box for this primitive.
+         *
+         * @return BoundingBox
+         */
+        virtual BoundingBox boundingBox() const;
 
         // Ray collision helpers (common to all object types)
         /**
