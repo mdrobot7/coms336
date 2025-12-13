@@ -24,6 +24,17 @@ space := $() $()
 comma := ,
 LDFLAGS := -Wl,$(subst $(space),$(comma),$(LDFLAGS))
 
+ifneq ($(wildcard ./venv/Scripts/activate),)
+$(eval PYTHON := ./venv/Scripts/python.exe)
+$(eval PIP := ./venv/Scripts/pip.exe)
+else ifneq ($(wildcard ./venv/bin/activate),)
+$(eval PYTHON := ./venv/bin/python)
+$(eval PIP := ./venv/bin/pip)
+else
+$(info Python venv not found, generating...)
+$(shell python -m venv ./venv)
+endif
+
 all: $(BUILD_DIR)/$(TARGET_EXE) compiledb
 
 # Link C sources into final executable
@@ -43,7 +54,15 @@ $(BUILD_DIR)/%.s.o: %.s
 # Generate ./build/compile_commands.json using compiledb
 compiledb: $(BUILD_DIR)/$(TARGET_EXE)
 	mkdir -p $(BUILD_DIR)
-	compiledb -n -o $(BUILD_DIR)/compile_commands.json make
+	$(PYTHON) -m compiledb -n -o $(BUILD_DIR)/compile_commands.json make
+
+documentation:
+	pdflatex -halt-on-error -output-directory=docs -job-name=docs -aux-directory=docs/latex_aux ./docs/main.tex
+
+setup:
+	mkdir -p ./.vscode
+	cp ./scripts/vscode/* ./.vscode
+	$(PIP) install compiledb
 
 clean:
 	rm -r $(BUILD_DIR)
