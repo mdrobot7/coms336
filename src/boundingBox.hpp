@@ -17,7 +17,7 @@ public:
      * bounding box. Also returns the time (t) that the
      * ray hits the box, or infinity if no boxes were hit.
      */
-    bool intersectsBox(Ray &r, double &t);
+    bool intersectsBox(const Ray &r, double &t);
 
     /**
      * @brief Merges another bounding box into this one.
@@ -41,5 +41,5 @@ private:
      * @brief Calculate time in which the ray intersects a
      * particular point along a particular axis.
      */
-    double intersectionTime(Ray &r, double val, int axis);
+    double intersectionTime(const Ray &r, double val, int axis);
 };

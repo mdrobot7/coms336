@@ -27,7 +27,7 @@ public:
      * If any level of the BVH results in misses for both the
      * left and right child the method returns NULL.
      */
-    object::Primitive::Collision intersects(Ray &incoming, double &t, Color &color);
+    object::Primitive::Collision intersects(const Ray &incoming, Ray &outgoing, double &t, Color &color);
 
 private:
     BoundingVolumeHierarchy *mLeft;

@@ -156,26 +156,28 @@ void Render::renderPixel()
         for (int i = 0; i < mAntiAliasingLevel; i++)
         {
             Vector v = getImgPlanePixelRandom(nextY, nextX);
-            Ray baseRay = Ray(v, Vector::svsub(v, mPinhole).vnorm());
+            Ray inRay = Ray(v, Vector::svsub(v, mPinhole).vnorm());
 
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
             for (int i = 0; i < mMaxBounces; i++)
             {
                 // Check BVH
+                Ray outRay;
                 double t = std::numeric_limits<double>::infinity();
                 Color color;
-                object::Primitive::Collision collision = mBvh.intersects(baseRay, t, color);
+                object::Primitive::Collision collision = mBvh.intersects(inRay, outRay, t, color);
+                inRay = Ray(outRay);
 
                 if (collision == object::Primitive::Collision::REFLECTED)
                 {
                     // We have more stuff to hit
-                    baseRay.addCollision(color);
+                    inRay.addCollision(color);
                 }
                 else if (collision == object::Primitive::Collision::ABSORBED)
                 {
                     // Ray was absorbed, we've found its final color
-                    baseRay.addCollision(color);
-                    pixelColor.vadd(baseRay.mColor);
+                    inRay.addCollision(color);
+                    pixelColor.vadd(inRay.mColor);
                     break;
                 }
                 else if (collision == object::Primitive::Collision::MISSED)

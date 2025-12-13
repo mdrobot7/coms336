@@ -75,7 +75,7 @@ BoundingVolumeHierarchy::~BoundingVolumeHierarchy()
     destroySubtree(this);
 }
 
-object::Primitive::Collision BoundingVolumeHierarchy::intersects(Ray &incoming, double &t, Color &color)
+object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &incoming, Ray &outgoing, double &t, Color &color)
 {
     // Traverse down any nodes that intersect the ray
     // (regardless of what side of the tree they're on).
@@ -99,6 +99,7 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(Ray &incoming, 
         if (collision != object::Primitive::Collision::MISSED && thisT < t)
         {
             // We hit something closer than our current mark, so remember it
+            outgoing = Ray(thisIncoming);
             t = thisT;
             color = Color(thisColor);
             return collision;
@@ -113,16 +114,17 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(Ray &incoming, 
     // TODO: ignore nodes that are closer than t
     if (intLeft)
     {
-        collision = mLeft->intersects(incoming, t, color);
+        collision = mLeft->intersects(incoming, outgoing, t, color);
     }
     if (intRight)
     {
-        Ray thisIncoming = Ray(incoming);
+        Ray thisOutgoing = Ray();
         double thisT = t;
         Color thisColor = Color(color);
-        object::Primitive::Collision rightCollision = mRight->intersects(thisIncoming, thisT, thisColor);
+        object::Primitive::Collision rightCollision = mRight->intersects(incoming, thisOutgoing, thisT, thisColor);
         if (rightCollision != object::Primitive::Collision::MISSED && thisT < t)
         {
+            outgoing = Ray(thisOutgoing);
             t = thisT;
             color = Color(thisColor);
             collision = rightCollision;

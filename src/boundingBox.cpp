@@ -25,7 +25,7 @@ BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, dou
     mIntersections[V_Z][1] = maxZ + sPadding;
 }
 
-bool BoundingBox::intersectsBox(Ray &r, double &t)
+bool BoundingBox::intersectsBox(const Ray &r, double &t)
 {
     double minMaxInt = std::numeric_limits<double>::infinity();
     double maxMinInt = -std::numeric_limits<double>::infinity();
@@ -53,7 +53,7 @@ bool BoundingBox::intersectsBox(Ray &r, double &t)
     return false;
 }
 
-double BoundingBox::intersectionTime(Ray &r, double val, int axis)
+double BoundingBox::intersectionTime(const Ray &r, double val, int axis)
 {
     // Solve P = O + td for t
     return (val - r.mOrigin[axis]) / r.mDir[axis];
