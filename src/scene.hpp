@@ -28,6 +28,7 @@ namespace object
         double mIndexOfRefraction;
         Color mColor;
         STBImage *mTexture;
+        BoundingBox mBoundingBox;
 
         Primitive();
         Primitive(nlohmann::json &json);

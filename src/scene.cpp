@@ -12,7 +12,10 @@ namespace object
 {
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json &json) { (void)json; }
-    BoundingBox Primitive::boundingBox() const {}
+    BoundingBox Primitive::boundingBox() const
+    {
+        return BoundingBox();
+    }
 
     enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const
     {
@@ -104,6 +107,8 @@ namespace object
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
         mNormal.vnorm();
+
+        mBoundingBox = boundingBox();
     }
 
     Triangle::Triangle(nlohmann::json &json)
@@ -122,6 +127,8 @@ namespace object
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
         mNormal.vnorm();
+
+        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Triangle::collide(Ray &incoming, double &t, Color &color) const
@@ -217,6 +224,7 @@ namespace object
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
         mTexture = NULL;
+        mBoundingBox = boundingBox();
     }
 
     Sphere::Sphere(nlohmann::json &json)
@@ -226,6 +234,8 @@ namespace object
                          json["z"]);
         mRadius = json["radius"];
         mTexture = NULL;
+
+        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
@@ -326,6 +336,8 @@ namespace object
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
         mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
+
+        mBoundingBox = boundingBox();
     }
 
     Quad::Quad(nlohmann::json &json)
@@ -344,6 +356,8 @@ namespace object
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
         mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
+
+        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Quad::collide(Ray &incoming, double &t, Color &color) const
@@ -427,6 +441,7 @@ namespace object
         mSurface = surface;
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
+        mBoundingBox = boundingBox();
     }
 
     Model::Model(nlohmann::json &json, tinyobj::ObjReader &obj) : mObj(obj)
@@ -446,6 +461,8 @@ namespace object
             Vector(json["scale"]["x"],
                    json["scale"]["y"],
                    json["scale"]["z"]));
+
+        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
