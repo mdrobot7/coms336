@@ -10,13 +10,14 @@
 #include <limits>
 #include "render.hpp"
 #include "vector.hpp"
+#include "bvh.hpp"
 
 // Framebuffer indices
 #define R (0)
 #define G (1)
 #define B (2)
 
-Render::Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene)
+Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene), mBvh(bvh)
 {
     mWidth = width;
     mHeight = height;
@@ -160,44 +161,36 @@ void Render::renderPixel()
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
             for (int i = 0; i < mMaxBounces; i++)
             {
-                object::Primitive::Collision closestCollision = object::Primitive::Collision::MISSED;
-                double minT = std::numeric_limits<double>::infinity();
-                Color closestColor;
-                Ray closestRay = Ray(baseRay);
-
-                for (const auto &p : mScene.mPrimitives)
-                {
-                    // Check collision with every object, we need to find the *closest* collision
-                    double t;
-                    Color color;
-                    Ray thisCollision = Ray(baseRay);
-                    object::Primitive::Collision collision = p->collide(thisCollision, t, color);
-                    if (collision != object::Primitive::Collision::MISSED && t < minT)
-                    {
-                        minT = t;
-                        closestCollision = collision;
-                        closestColor = color;
-                        closestRay = Ray(thisCollision);
-                    }
-                }
-
-                if (closestCollision == object::Primitive::Collision::REFLECTED)
-                {
-                    // We have more stuff to hit
-                    closestRay.addCollision(closestColor);
-                    baseRay = Ray(closestRay);
-                }
-                else if (closestCollision == object::Primitive::Collision::ABSORBED)
-                {
-                    // Ray was absorbed, we've found its final color
-                    closestRay.addCollision(closestColor);
-                    pixelColor.vadd(closestRay.mColor);
-                    break;
-                }
-                else if (closestCollision == object::Primitive::Collision::MISSED)
+                // Check BVH
+                object::Primitive *p = mBvh.intersects(baseRay);
+                if (!p)
                 {
                     // Missed everything, meaning we never hit a light and
                     // got absorbed. Give up and leave the pixel black
+                    break;
+                }
+
+                // If BVH finds something, the returned primitive is guaranteed to be
+                // a hit (of some sort) and *the closest hit*. No need for multiple tests.
+                Color color;
+                double t;
+                object::Primitive::Collision collision = p->collide(baseRay, t, color);
+
+                if (collision == object::Primitive::Collision::REFLECTED)
+                {
+                    // We have more stuff to hit
+                    baseRay.addCollision(color);
+                }
+                else if (collision == object::Primitive::Collision::ABSORBED)
+                {
+                    // Ray was absorbed, we've found its final color
+                    baseRay.addCollision(color);
+                    pixelColor.vadd(baseRay.mColor);
+                    break;
+                }
+                else if (collision == object::Primitive::Collision::MISSED)
+                {
+                    // BVH isn't a "tight fit", so we may still miss
                     break;
                 }
             }

@@ -4,6 +4,7 @@
 #include <ctime>
 #include "render.hpp"
 #include "scene.hpp"
+#include "bvh.hpp"
 
 #define HELP                                                                      \
     "COMS 336 Ray Tracing Renderer\n"                                             \
@@ -74,7 +75,10 @@ int main(int argc, char *argv[])
         std::cout << "Building scene..." << std::endl;
         s.load(scenePath);
 
-        Render render(s, width, height, antiAliasingLevel, jobs, depth);
+        std::cout << "Generating bounding volumes..." << std::endl;
+        BoundingVolumeHierarchy *bvh = new BoundingVolumeHierarchy(s.mPrimitives); // Must be heap alloc
+
+        Render render(s, *bvh, width, height, antiAliasingLevel, jobs, depth);
         std::cout << "Launching renderer..." << std::endl;
         render.run();
         std::cout << "Saving output..." << std::endl;

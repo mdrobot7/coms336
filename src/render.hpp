@@ -7,11 +7,12 @@
 #include <mutex>
 #include "scene.hpp"
 #include "ray.hpp"
+#include "bvh.hpp"
 
 class Render
 {
 public:
-    Render(Scene &scene, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
+    Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
     ~Render();
 
     /**
@@ -33,6 +34,8 @@ public:
 
 private:
     Scene &mScene;
+
+    BoundingVolumeHierarchy &mBvh;
 
     int mWidth, mHeight, mAntiAliasingLevel;
     uint8_t *mFb;
