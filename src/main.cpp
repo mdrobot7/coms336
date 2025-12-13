@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
         render.run();
         std::cout << "Saving output..." << std::endl;
         render.save(outputPath);
+        delete bvh;
 
         char timeElapsed[9];
         time_t interval = std::time(NULL) - startTime;

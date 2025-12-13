@@ -62,13 +62,14 @@ BoundingBox &BoundingBox::merge(const BoundingBox &other)
 {
     for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; i < 2; i++)
+        // Make as large a box as needed to hold both boxes
+        if (mIntersections[i][0] > other.mIntersections[i][0])
         {
-            // Make as large a box as needed to hold both boxes
-            if (abs(mIntersections[i][j]) > abs(other.mIntersections[i][j]))
-            {
-                mIntersections[i][j] = other.mIntersections[i][j];
-            }
+            mIntersections[i][0] = other.mIntersections[i][0];
+        }
+        if (mIntersections[i][1] < other.mIntersections[i][1])
+        {
+            mIntersections[i][1] = other.mIntersections[i][1];
         }
     }
     return *this;

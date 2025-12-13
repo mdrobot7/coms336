@@ -411,7 +411,7 @@ namespace object
     {
         Vector cornerW = Vector::svadd(mOrigin, mWidth);
         Vector cornerH = Vector::svadd(mOrigin, mHeight);
-        Vector cornerWH = Vector::svadd(cornerH, mHeight);
+        Vector cornerWH = Vector::svadd(cornerW, mHeight);
         // 4-way min/max... this is ugly
         double minX = MIN(MIN(mOrigin[V_X], cornerW[V_X]), MIN(cornerH[V_X], cornerWH[V_X]));
         double maxX = MAX(MAX(mOrigin[V_X], cornerW[V_X]), MAX(cornerH[V_X], cornerWH[V_X]));

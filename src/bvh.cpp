@@ -1,18 +1,16 @@
 #include "bvh.hpp"
 
 #include <algorithm>
+#include <typeinfo>
 
-BoundingVolumeHierarchy::BoundingVolumeHierarchy() {}
-
-BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives)
+BoundingVolumeHierarchy::BoundingVolumeHierarchy()
 {
-    // Can't convince CPP to do std::sort with unique ptr, so doing this instead
-    // std::vector<object::Primitive *> primPointers;
-    // for (int i = 0; i < primitives.size(); i++) {
-    //     primPointers.push_back(primitives[i].get)
-    // }
-    BoundingVolumeHierarchy(primitives, 0, primitives.size());
+    mPrimitive = NULL;
+    mLeft = NULL;
+    mRight = NULL;
 }
+
+BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives) : BoundingVolumeHierarchy(primitives, 0, primitives.size()) {}
 
 BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives, size_t start, size_t end)
 {
@@ -31,20 +29,28 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<obj
     int axis = mBbox.largestAxis();
     int range = end - start;
 
-    // Go down the tree, generating nodes and assigning bounding boxes
-    if (range == 1)
+    // Go down the tree, generating nodes and assigning bounding boxes.
+    // Skip the camera, it doesn't have a bounding box (it's still a Primitive
+    // for json reasons).
+    if (range == 1 && typeid(*primitives[start]) != typeid(object::Camera))
     {
         mPrimitive = primitives[start].get();
         mBbox = mPrimitive->mBoundingBox;
     }
     else if (range == 2)
     {
-        mLeft = new BoundingVolumeHierarchy();
-        mLeft->mPrimitive = primitives[start].get();
-        mLeft->mBbox = mLeft->mPrimitive->mBoundingBox;
-        mRight = new BoundingVolumeHierarchy();
-        mRight->mPrimitive = primitives[start + 1].get();
-        mRight->mBbox = mRight->mPrimitive->mBoundingBox;
+        if (typeid(*primitives[start]) != typeid(object::Camera))
+        {
+            mLeft = new BoundingVolumeHierarchy();
+            mLeft->mPrimitive = primitives[start].get();
+            mLeft->mBbox = mLeft->mPrimitive->mBoundingBox;
+        }
+        if (typeid(*primitives[start + 1]) != typeid(object::Camera))
+        {
+            mRight = new BoundingVolumeHierarchy();
+            mRight->mPrimitive = primitives[start + 1].get();
+            mRight->mBbox = mRight->mPrimitive->mBoundingBox;
+        }
     }
     else
     {
@@ -57,8 +63,8 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<obj
                                           : BoundingVolumeHierarchy::compare_z;
 
         std::sort(std::begin(primitives) + start, std::begin(primitives) + end, comparator);
-        mLeft = new BoundingVolumeHierarchy(primitives, start, range / 2);
-        mRight = new BoundingVolumeHierarchy(primitives, range / 2, end);
+        mLeft = new BoundingVolumeHierarchy(primitives, start, start + range / 2);
+        mRight = new BoundingVolumeHierarchy(primitives, start + range / 2, end);
     }
 }
 
@@ -102,7 +108,6 @@ void BoundingVolumeHierarchy::destroySubtree(BoundingVolumeHierarchy *subtree)
     {
         destroySubtree(subtree->mRight);
     }
-    delete subtree;
 }
 
 bool BoundingVolumeHierarchy::compare_x(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b)
