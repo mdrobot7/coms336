@@ -113,6 +113,7 @@ namespace object
         Triangle(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        BoundingBox boundingBox() const override;
 
     private:
         void textureLookup(double alpha, double beta, double gamma, Color &color) const;
@@ -134,6 +135,7 @@ namespace object
         Sphere(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        BoundingBox boundingBox() const override;
 
     private:
         void textureLookup(Vector &intersection, Color &color) const;
@@ -151,6 +153,7 @@ namespace object
         Quad(nlohmann::json &json);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        BoundingBox boundingBox() const override;
 
     private:
         void textureLookup(double alpha, double beta, Color &color) const;
@@ -168,6 +171,7 @@ namespace object
         Model(nlohmann::json &json, tinyobj::ObjReader &obj);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        BoundingBox boundingBox() const override;
     };
 
     /**

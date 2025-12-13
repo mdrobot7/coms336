@@ -12,6 +12,7 @@ namespace object
 {
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json &json) { (void)json; }
+    BoundingBox Primitive::boundingBox() const {}
 
     enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const
     {
@@ -180,6 +181,17 @@ namespace object
         return bounce(incoming, intersection, mNormal, color);
     }
 
+    BoundingBox Triangle::boundingBox() const
+    {
+        double minX = MIN(MIN(mVertices[0][V_X], mVertices[1][V_X]), mVertices[2][V_X]);
+        double maxX = MAX(MAX(mVertices[0][V_X], mVertices[1][V_X]), mVertices[2][V_X]);
+        double minY = MIN(MIN(mVertices[0][V_Y], mVertices[1][V_Y]), mVertices[2][V_Y]);
+        double maxY = MAX(MAX(mVertices[0][V_Y], mVertices[1][V_Y]), mVertices[2][V_Y]);
+        double minZ = MIN(MIN(mVertices[0][V_Z], mVertices[1][V_Z]), mVertices[2][V_Z]);
+        double maxZ = MAX(MAX(mVertices[0][V_Z], mVertices[1][V_Z]), mVertices[2][V_Z]);
+        return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
+    }
+
     void Triangle::textureLookup(double alpha, double beta, double gamma, Color &color) const
     {
         if (!mTexture)
@@ -268,6 +280,17 @@ namespace object
 
         // Bounce it
         return bounce(incoming, intersection, normal, color);
+    }
+
+    BoundingBox Sphere::boundingBox() const
+    {
+        return BoundingBox(
+            mOrigin[V_X] - mRadius,
+            mOrigin[V_X] + mRadius,
+            mOrigin[V_Y] - mRadius,
+            mOrigin[V_Y] + mRadius,
+            mOrigin[V_Z] - mRadius,
+            mOrigin[V_Z] + mRadius);
     }
 
     void Sphere::textureLookup(Vector &intersection, Color &color) const
@@ -368,6 +391,21 @@ namespace object
 
         // Bounce it
         return bounce(incoming, intersection, mNormal, color);
+    }
+
+    BoundingBox Quad::boundingBox() const
+    {
+        Vector cornerW = Vector::svadd(mOrigin, mWidth);
+        Vector cornerH = Vector::svadd(mOrigin, mHeight);
+        Vector cornerWH = Vector::svadd(cornerH, mHeight);
+        // 4-way min/max... this is ugly
+        double minX = MIN(MIN(mOrigin[V_X], cornerW[V_X]), MIN(cornerH[V_X], cornerWH[V_X]));
+        double maxX = MAX(MAX(mOrigin[V_X], cornerW[V_X]), MAX(cornerH[V_X], cornerWH[V_X]));
+        double minY = MIN(MIN(mOrigin[V_Y], cornerW[V_Y]), MIN(cornerH[V_Y], cornerWH[V_Y]));
+        double maxY = MAX(MAX(mOrigin[V_Y], cornerW[V_Y]), MAX(cornerH[V_Y], cornerWH[V_Y]));
+        double minZ = MIN(MIN(mOrigin[V_Z], cornerW[V_Z]), MIN(cornerH[V_Z], cornerWH[V_Z]));
+        double maxZ = MAX(MAX(mOrigin[V_Z], cornerW[V_Z]), MAX(cornerH[V_Z], cornerWH[V_Z]));
+        return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
     void Quad::textureLookup(double alpha, double beta, Color &color) const
@@ -473,6 +511,59 @@ namespace object
         incoming = Ray(closestRay);
         // t, color set during execution
         return closestCollision;
+    }
+
+    BoundingBox Model::boundingBox() const
+    {
+        // Slow... there's no faster way, you have to check every vertex
+        double minX = std::numeric_limits<double>::infinity();
+        double maxX = -std::numeric_limits<double>::infinity();
+        double minY = std::numeric_limits<double>::infinity();
+        double maxY = -std::numeric_limits<double>::infinity();
+        double minZ = std::numeric_limits<double>::infinity();
+        double maxZ = -std::numeric_limits<double>::infinity();
+
+        auto &attrib = mObj.GetAttrib();
+        auto &shapes = mObj.GetShapes();
+        auto &materials = mObj.GetMaterials();
+        int indexOffset = 0;
+        for (size_t s = 0; s < shapes.size(); s++)
+        {
+            const tinyobj::shape_t &shape = shapes[s];
+            size_t numTriangles = shape.mesh.num_face_vertices.size();
+            for (size_t n = 0; n < numTriangles; n++)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    // Index buffer lookup
+                    tinyobj::index_t index = shape.mesh.indices[indexOffset + i];
+                    Vector v;
+                    // Vertex buffer lookup
+                    for (int j = 0; j < 3; j++)
+                    {
+                        v[j] = attrib.vertices[3 * size_t(index.vertex_index) + j];
+                    }
+
+                    // Handle scaling, rotation, and positioning (model matrix).
+                    mModelMatrix.mul(v);
+
+                    if (v[V_X] < minX)
+                        minX = v[V_X];
+                    if (v[V_X] > maxX)
+                        maxX = v[V_X];
+                    if (v[V_Y] < minY)
+                        minY = v[V_Y];
+                    if (v[V_Y] > maxY)
+                        maxY = v[V_Y];
+                    if (v[V_Z] < minZ)
+                        minZ = v[V_Z];
+                    if (v[V_Z] > maxZ)
+                        maxZ = v[V_Z];
+                }
+                indexOffset += 3;
+            }
+        }
+        return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
     Camera::Camera() {}
