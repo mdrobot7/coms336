@@ -10,6 +10,8 @@
 
 namespace object
 {
+    double Primitive::sEmissiveGain = 1;
+
     Primitive::Primitive() {}
     Primitive::Primitive(nlohmann::json &json) { (void)json; }
     BoundingBox Primitive::boundingBox() const
@@ -20,6 +22,10 @@ namespace object
     void Primitive::textureLookup(const Vector &intersection, double u, double v, Color &color) const
     {
         color = mTexture ? mTexture->getUv(u, v) : mColor;
+        if (mSurface == Color::Surface::EMISSIVE)
+        {
+            color.vscale(sEmissiveGain);
+        }
         if (mPerlin)
         {
             color.vscale(mPerlin->get(intersection));
@@ -650,12 +656,13 @@ namespace object
 
     Camera::Camera() {}
 
-    Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength)
+    Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength, double emissiveGain)
     {
         mOrigin = origin;
         mFront = Vector::svnorm(front);
         mTop = Vector::svnorm(top);
         mFocalLength = focalLength;
+        Primitive::sEmissiveGain = emissiveGain;
     }
 
     Camera::Camera(nlohmann::json &json)
@@ -672,6 +679,7 @@ namespace object
                       json["top"]["z"])
                    .vnorm();
         mFocalLength = json["focalLength"];
+        Primitive::sEmissiveGain = json["emissiveGain"];
     }
 }
 

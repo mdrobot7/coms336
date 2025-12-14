@@ -17,7 +17,8 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 1
+        "focalLength": 1,
+        "emissiveGain": 1
     },
     "objects": [
         {

@@ -194,6 +194,7 @@ void Render::renderPixel()
             }
         }
         pixelColor.vscale(1.0 / mAntiAliasingLevel); // Average our ray colors
+        pixelColor.vclip(1.0);
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);

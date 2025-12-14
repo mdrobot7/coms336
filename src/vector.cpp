@@ -115,12 +115,30 @@ Vector &Vector::vnorm(const Vector &a)
     return (mag != 0.0) ? vscale(a, 1.0 / mag) : *this;
 }
 
+Vector &Vector::vclip(double clip)
+{
+    return vclip(*this, clip);
+}
+
+Vector &Vector::vclip(const Vector &a, double clip)
+{
+    v[0] = CLAMP(a[0], 0, clip);
+    v[1] = CLAMP(a[1], 0, clip);
+    v[2] = CLAMP(a[2], 0, clip);
+    return *this;
+}
+
 Vector &Vector::vrand3()
 {
     v[0] = (double)(rand() - RAND_MAX / 2);
     v[1] = (double)(rand() - RAND_MAX / 2);
     v[2] = (double)(rand() - RAND_MAX / 2);
     return this->vnorm();
+}
+
+bool Vector::closeToZero() const
+{
+    return CLOSE_TO(v[0], 0.0) && CLOSE_TO(v[1], 0.0) && CLOSE_TO(v[2], 0.0);
 }
 
 ModelMatrix::ModelMatrix() {}
@@ -166,9 +184,4 @@ Vector &ModelMatrix::mul(Vector &vec3) const
 
     vec3 = temp;
     return vec3;
-}
-
-bool Vector::closeToZero() const
-{
-    return CLOSE_TO(v[0], 0.0) && CLOSE_TO(v[1], 0.0) && CLOSE_TO(v[2], 0.0);
 }

@@ -94,6 +94,18 @@ public:
     }
 
     /**
+     * @brief Clamp all elements of a vector in the range [0, clip]
+     * (inclusive).
+     */
+    Vector &vclip(double clip);
+    Vector &vclip(const Vector &a, double clip);
+    static inline Vector svclip(const Vector &a, double clip)
+    {
+        Vector v;
+        return v.vclip(a, clip);
+    }
+
+    /**
      * @brief Return a random normalized 3-dimensional vector.
      * Uses rand() and assumes srand() has already been called.
      */

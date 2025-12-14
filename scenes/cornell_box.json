@@ -17,7 +17,8 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 0.5
+        "focalLength": 0.5,
+        "emissiveGain": 2.5
     },
     "objects": [
         {
@@ -260,7 +261,7 @@
             "z": -60,
             "radius": 20,
             "surface": "diffuse",
-            "texture": "0xFFFFFF",
+            "texture": "0x5C79E0",
             "perlin": true
         }
     ]

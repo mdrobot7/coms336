@@ -24,6 +24,7 @@ namespace object
         };
 
         static constexpr double sRefractionGlass = 1.458;
+        static double sEmissiveGain; // Boost light brightness to a max of (sEmissiveGain * [1, 1, 1])
 
         enum Color::Surface mSurface;
         double mIndexOfRefraction;
@@ -210,7 +211,7 @@ namespace object
         double mFocalLength;
 
         Camera();
-        Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength);
+        Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength, double emissiveGain);
         Camera(nlohmann::json &json);
     };
 }; // namespace Object
