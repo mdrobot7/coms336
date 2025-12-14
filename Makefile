@@ -10,7 +10,7 @@ NLOHMANN_JSON_PATH := $(LIB_DIR)/json/single_include
 TINYOBJLOADER_PATH := $(LIB_DIR)/tinyobjloader
 
 CC := g++
-COMMON_FLAGS := -O3 -g
+COMMON_FLAGS := -O3 -g -lpthread
 CFLAGS := -Wall -Wextra
 CPPFLAGS := -MMD -MP -I$(STB_PATH) -I$(NLOHMANN_JSON_PATH) -I$(TINYOBJLOADER_PATH)
 LDFLAGS := --gc-sections
