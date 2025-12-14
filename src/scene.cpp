@@ -230,6 +230,171 @@ namespace object
         Primitive::textureLookup(intersection, u, v, color);
     }
 
+    Quadric::Quadric() {}
+
+    Quadric::Quadric(const Vector &center, double a2, double b2, double c2, double d2, double maxOnAxis, double maxOffAxis, const std::string &axis, enum Color::Surface surface, double indexOfRefraction, const Color &color)
+    {
+        mOrigin = center;
+        mA2 = a2;
+        mB2 = b2;
+        mC2 = c2;
+        mD2 = d2;
+        mMaxOnAxis = maxOnAxis;
+        mMaxOffAxis = maxOffAxis;
+        mAxis = axis;
+        mSurface = surface;
+        mIndexOfRefraction = indexOfRefraction;
+        mColor = color;
+        mTexture = NULL;
+        mPerlin = NULL;
+        mBoundingBox = boundingBox();
+    }
+
+    Quadric::Quadric(nlohmann::json json)
+    {
+        mOrigin = Vector(json["x"],
+                         json["y"],
+                         json["z"]);
+        mA2 = json["a2"];
+        mB2 = json["b2"];
+        mC2 = json["c2"];
+        mD2 = json["d2"];
+        mMaxOnAxis = json["maxOnAxis"];
+        mMaxOffAxis = json["maxOffAxis"];
+        mAxis = json["axis"];
+        if (mAxis != "x" && mAxis != "y" && mAxis != "z")
+        {
+            throw std::invalid_argument("Invalid axis");
+        }
+        mTexture = NULL;
+        mPerlin = NULL;
+    }
+
+    enum Primitive::Collision Quadric::collide(Ray &incoming, double &t, Color &color) const
+    {
+        // a2, b2, c2, d2 are the squared and signed versions of a, b, c, d in the
+        // hyperboloid equation. Reorganize (Cx - X)^2/a2 + (Cy - Y)^2/b2 + (Cz - Z)^2/c2 = d2
+        // into a quadratic equation w.r.t. t, solve with quadratic equation.
+        // Special cases:
+        // - Sphere: a2 = b2 = c2 = 1, d2 = radius
+        // - Cone: one of a2, b2, c2 is negative, d2 = 0
+        // - Cylinder: one of a2, b2, c2 is -inf, d2 = 1
+
+        Vector centerMinusIncoming = Vector::svsub(mOrigin, incoming.mOrigin);
+        double a = mB2 * mC2 * incoming.mDir[0] * incoming.mDir[0];
+        a += mA2 * mC2 * incoming.mDir[1] * incoming.mDir[1];
+        a += mA2 * mB2 * incoming.mDir[2] * incoming.mDir[2];
+        double b = 2.0 * mB2 * mC2 * incoming.mDir[0] * centerMinusIncoming[0];
+        b += 2.0 * mA2 * mC2 * incoming.mDir[1] * centerMinusIncoming[1];
+        b += 2.0 * mA2 * mB2 * incoming.mDir[2] * centerMinusIncoming[2];
+        b = -b;
+        double c = mB2 * mC2 * centerMinusIncoming[0] * centerMinusIncoming[0];
+        c += mA2 * mC2 * centerMinusIncoming[1] * centerMinusIncoming[1];
+        c += mA2 * mB2 * centerMinusIncoming[2] * centerMinusIncoming[2];
+        c -= mA2 * mB2 * mC2 * mD2;
+
+        double discriminant = b * b - 4.0 * a * c;
+        if (discriminant < 0.0)
+        {
+            // No real roots
+            return Collision::MISSED;
+        }
+
+        // Take the negative of the +/-, we want the smaller t (closer point)
+        t = (-b - sqrt(discriminant)) / (2.0 * a);
+        if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(fabs(t), 0.0))
+        {
+            // Dielectrics change ray direction at the surface of
+            // the object. That leads to a lot of false Collision::MISSEDs
+            // because we're either really close or negative.
+            // Grab the further t.
+            t = (-b + sqrt(discriminant)) / (2.0 * a);
+        }
+
+        if (t < 0)
+        {
+            // Don't hit things behind us
+            return Collision::MISSED;
+        }
+        else if (CLOSE_TO(t, 0.0))
+        {
+            // Don't collide with an object we just collided with
+            return Collision::MISSED;
+        }
+
+        Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, t));
+
+        // Ignore the reflection of the quadric over the origin plane (plane normal to mAxis)
+        if (mAxis == "x" && intersection[0] < mOrigin[0])
+        {
+            return Collision::MISSED;
+        }
+        if (mAxis == "y" && intersection[1] < mOrigin[1])
+        {
+            return Collision::MISSED;
+        }
+        if (mAxis == "z" && intersection[2] < mOrigin[2])
+        {
+            return Collision::MISSED;
+        }
+
+        // Calculate surface normal using the gradient at the intersection point
+        // gradient = <dF/dx, dF/dy, dF/dz> for those who forgot (those are all partial derivatives).
+        // Conveniently, all quadrics have x^2 terms so it's just a matter of multiplying in
+        // the coeffients and handling power rule.
+        Vector gradient(intersection[0] * 2.0 / mA2, intersection[1] * 2.0 / mB2, intersection[2] * 2.0 / mC2);
+        Vector normal = Vector::svnorm(gradient);
+        if (mSurface == Color::SPECULAR || mSurface == Color::DIELECTRIC)
+        {
+            color = Color(1, 1, 1);
+        }
+        else
+        {
+            textureLookup(intersection, color);
+        }
+
+        // Bounce it
+        return bounce(incoming, intersection, normal);
+    }
+
+    BoundingBox Quadric::boundingBox() const
+    {
+        // Make a (mMax)^3 box pointing in the direction of mAxis
+        if (mAxis == "x")
+        {
+            return BoundingBox(
+                mOrigin[0] + 0,
+                mOrigin[0] + mMaxOnAxis,
+                mOrigin[1] + -mMaxOffAxis,
+                mOrigin[1] + mMaxOffAxis,
+                mOrigin[2] + -mMaxOffAxis,
+                mOrigin[2] + mMaxOffAxis);
+        }
+        if (mAxis == "y")
+        {
+            return BoundingBox(
+                mOrigin[0] + -mMaxOffAxis,
+                mOrigin[0] + mMaxOffAxis,
+                mOrigin[1] + 0,
+                mOrigin[1] + mMaxOnAxis,
+                mOrigin[2] + -mMaxOffAxis,
+                mOrigin[2] + mMaxOffAxis);
+        }
+        return BoundingBox(
+            mOrigin[0] + -mMaxOffAxis,
+            mOrigin[0] + mMaxOffAxis,
+            mOrigin[1] + -mMaxOffAxis,
+            mOrigin[1] + mMaxOffAxis,
+            mOrigin[2] + 0,
+            mOrigin[2] + mMaxOnAxis);
+    }
+
+    void Quadric::textureLookup(Vector &intersection, Color &color) const
+    {
+        // No texture support, but needs to be here for overrides
+        color = mColor;
+    }
+
     Sphere::Sphere() {}
 
     Sphere::Sphere(const Vector &center, double radius, enum Color::Surface surface, double indexOfRefraction, const Color &color)
@@ -743,6 +908,10 @@ void Scene::load(std::string sceneJsonPath)
         else if (i["type"] == "sphere")
         {
             mPrimitives.push_back(std::make_unique<object::Sphere>(i));
+        }
+        else if (i["type"] == "quadric")
+        {
+            mPrimitives.push_back(std::make_unique<object::Quadric>(i));
         }
         else if (i["type"] == "triangle")
         {

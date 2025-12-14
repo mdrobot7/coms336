@@ -128,6 +128,26 @@ namespace object
         void textureLookup(double alpha, double beta, double gamma, const Vector &intersection, Color &color) const;
     };
 
+    class Quadric : public Primitive
+    {
+    public:
+        Vector mOrigin;
+        double mA2, mB2, mC2, mD2; // Squared parameters (can be negative)
+        double mMaxOnAxis;
+        double mMaxOffAxis;
+        std::string mAxis; // Axis to bound
+
+        Quadric();
+        Quadric(const Vector &center, double a2, double b2, double c2, double d2, double maxOnAxis, double maxOffAxis, const std::string &axis, enum Color::Surface surface, double indexOfRefraction, const Color &color);
+        Quadric(nlohmann::json json);
+
+        virtual enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        virtual BoundingBox boundingBox() const override;
+
+    private:
+        void textureLookup(Vector &intersection, Color &color) const;
+    };
+
     /**
      * @brief Simple sphere class.
      * Complex objects should be imported using an obj file.

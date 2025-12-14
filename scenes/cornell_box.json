@@ -304,6 +304,23 @@
             "perlin": false
         },
         {
+            "_comment": "An upside-down cone with a height of 10.",
+            "type": "quadric",
+            "x": 20,
+            "y": 5,
+            "z": -80,
+            "a2": 1,
+            "b2": -1,
+            "c2": 1,
+            "d2": 0,
+            "maxOnAxis": 15,
+            "maxOffAxis": 15,
+            "axis": "y",
+            "surface": "diffuse",
+            "texture": "0x5C79E0",
+            "perlin": false
+        },
+        {
             "type": "obj",
             "path": "./assets/suzanne.obj",
             "surface": "diffuse",
