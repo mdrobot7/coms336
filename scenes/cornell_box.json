@@ -202,7 +202,7 @@
             "z": -150,
             "radius": 25,
             "surface": "dielectric",
-            "indexOfRefraction": 1.458,
+            "indexOfRefraction": 0.685,
             "texture": "0xFFFFFF",
             "perlin": false
         },
@@ -263,6 +263,71 @@
             "surface": "diffuse",
             "texture": "0x5C79E0",
             "perlin": true
+        },
+        {
+            "_comment": "Roof on top of glass ball",
+            "type": "triangle",
+            "vertices": [
+                {
+                    "x": 100,
+                    "y": 70,
+                    "z": -200
+                },
+                {
+                    "x": 50,
+                    "y": 70,
+                    "z": -80
+                },
+                {
+                    "x": 0,
+                    "y": 70,
+                    "z": -200
+                }
+            ],
+            "texcoords": [
+                {
+                    "u": 0,
+                    "v": 0
+                },
+                {
+                    "u": 0,
+                    "v": 0
+                },
+                {
+                    "u": 0,
+                    "v": 0
+                }
+            ],
+            "surface": "diffuse",
+            "texture": "0xDA3CE6",
+            "perlin": false
+        },
+        {
+            "type": "obj",
+            "path": "./assets/suzanne.obj",
+            "surface": "diffuse",
+            "texture": "0x3D7DE3",
+            "perlin": false,
+            "origin": {
+                "x": -30,
+                "y": 20,
+                "z": -60
+            },
+            "front": {
+                "x": 0,
+                "y": 0,
+                "z": 1
+            },
+            "top": {
+                "x": 0,
+                "y": 1,
+                "z": 0
+            },
+            "scale": {
+                "x": 10,
+                "y": 10,
+                "z": 10
+            }
         }
     ]
 }
