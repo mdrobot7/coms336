@@ -9,6 +9,7 @@
 #include "ray.hpp"
 #include "color.hpp"
 #include "boundingBox.hpp"
+#include "perlin.hpp"
 
 namespace object
 {
@@ -29,6 +30,7 @@ namespace object
         Color mColor;
         STBImage *mTexture;
         BoundingBox mBoundingBox;
+        Perlin *mPerlin;
 
         Primitive();
         Primitive(nlohmann::json &json);
@@ -51,6 +53,11 @@ namespace object
          * @return BoundingBox
          */
         virtual BoundingBox boundingBox() const;
+
+        /**
+         * @brief Perform a texture lookup, returning a color.
+         */
+        void textureLookup(const Vector &intersection, double u, double v, Color &color) const;
 
         // Ray collision helpers (common to all object types)
         /**
@@ -117,7 +124,7 @@ namespace object
         BoundingBox boundingBox() const override;
 
     private:
-        void textureLookup(double alpha, double beta, double gamma, Color &color) const;
+        void textureLookup(double alpha, double beta, double gamma, const Vector &intersection, Color &color) const;
     };
 
     /**
@@ -157,7 +164,7 @@ namespace object
         BoundingBox boundingBox() const override;
 
     private:
-        void textureLookup(double alpha, double beta, Color &color) const;
+        void textureLookup(double alpha, double beta, const Vector &intersection, Color &color) const;
         Vector mW; // Used for intersection checking
     };
 
@@ -223,6 +230,8 @@ public:
     // List of textures
     std::vector<std::unique_ptr<STBImage>> mTextures;
     std::vector<std::string> mTextureFilenames;
+
+    Perlin mPerlin;
 
     Scene();
     ~Scene();

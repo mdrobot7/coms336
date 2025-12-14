@@ -17,6 +17,20 @@ namespace object
         return BoundingBox();
     }
 
+    void Primitive::textureLookup(const Vector &intersection, double u, double v, Color &color) const
+    {
+        if (!mTexture)
+        {
+            color = mColor;
+            return;
+        }
+        color = mTexture->getUv(u, v);
+        if (mPerlin)
+        {
+            color.vscale(mPerlin->get(intersection));
+        }
+    }
+
     enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal) const
     {
         switch (mSurface)
@@ -111,6 +125,7 @@ namespace object
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
         mTexture = NULL;
+        mPerlin = NULL;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
@@ -131,6 +146,7 @@ namespace object
                                    0.0);
         }
         mTexture = NULL;
+        mPerlin = NULL;
 
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
@@ -187,7 +203,7 @@ namespace object
         }
         else
         {
-            textureLookup(alpha, beta, gamma, color);
+            textureLookup(alpha, beta, gamma, intersection, color);
         }
 
         // Bounce it
@@ -205,19 +221,13 @@ namespace object
         return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
-    void Triangle::textureLookup(double alpha, double beta, double gamma, Color &color) const
+    void Triangle::textureLookup(double alpha, double beta, double gamma, const Vector &intersection, Color &color) const
     {
-        if (!mTexture)
-        {
-            color = mColor;
-            return;
-        }
-
         // Thanks stack overflow https://stackoverflow.com/questions/17164376/inferring-u-v-for-a-point-in-a-triangle-from-vertex-u-vs
         double u = alpha * mTexcoords[0][0] + beta * mTexcoords[1][0] + gamma * mTexcoords[2][0];
         double v = alpha * mTexcoords[0][1] + beta * mTexcoords[1][1] + gamma * mTexcoords[2][1];
 
-        color = mTexture->getUv(u, v);
+        Primitive::textureLookup(intersection, u, v, color);
     }
 
     Sphere::Sphere() {}
@@ -230,6 +240,7 @@ namespace object
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
         mTexture = NULL;
+        mPerlin = NULL;
         mBoundingBox = boundingBox();
     }
 
@@ -240,6 +251,7 @@ namespace object
                          json["z"]);
         mRadius = json["radius"];
         mTexture = NULL;
+        mPerlin = NULL;
     }
 
     enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
@@ -309,12 +321,6 @@ namespace object
 
     void Sphere::textureLookup(Vector &intersection, Color &color) const
     {
-        if (!mTexture)
-        {
-            color = mColor;
-            return;
-        }
-
         // Convert intersection point to spherical coordinates
         Vector unitSphereIntersection = Vector::svscale(Vector::svsub(intersection, mOrigin), 1.0 / mRadius);
         double phi = atan2(-unitSphereIntersection[V_Z], unitSphereIntersection[V_X]) + M_PI;
@@ -322,7 +328,7 @@ namespace object
 
         double u = phi / (2.0 * M_PI);
         double v = theta / M_PI;
-        color = mTexture->getUv(u, v);
+        Primitive::textureLookup(intersection, u, v, color);
     }
 
     Quad::Quad() {}
@@ -336,6 +342,7 @@ namespace object
         mIndexOfRefraction = indexOfRefraction;
         mColor = color;
         mTexture = NULL;
+        mPerlin = NULL;
 
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
@@ -356,6 +363,7 @@ namespace object
                          json["height"]["y"],
                          json["height"]["z"]);
         mTexture = NULL;
+        mPerlin = NULL;
 
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
@@ -402,7 +410,7 @@ namespace object
         }
         else
         {
-            textureLookup(alpha, beta, color);
+            textureLookup(alpha, beta, intersection, color);
         }
 
         // Bounce it
@@ -424,17 +432,11 @@ namespace object
         return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
-    void Quad::textureLookup(double alpha, double beta, Color &color) const
+    void Quad::textureLookup(double alpha, double beta, const Vector &intersection, Color &color) const
     {
-        if (!mTexture)
-        {
-            color = mColor;
-            return;
-        }
-
         // Intersection testing gives us alpha and beta, which are
         // the same as u and v. mOrigin is at the top left of the image.
-        color = mTexture->getUv(alpha, beta);
+        Primitive::textureLookup(intersection, alpha, beta, color);
     }
 
     Model::Model(tinyobj::ObjReader &obj, const Vector &origin, const Vector &front, const Vector &top, const Vector &scale, enum Color::Surface surface, double indexOfRefraction, const Color &color) : mObj(obj)
@@ -472,6 +474,7 @@ namespace object
         tri.mIndexOfRefraction = mIndexOfRefraction;
         tri.mColor = mColor;
         tri.mTexture = NULL;
+        tri.mPerlin = NULL;
 
         Ray closestRay;
         t = std::numeric_limits<double>::infinity();
@@ -697,6 +700,8 @@ void Scene::load(std::string sceneJsonPath)
     tinyobj::ObjReaderConfig readerConfig;
     readerConfig.mtl_search_path = "./assets/materials"; // Hardcoded, fight me
 
+    mPerlin = Perlin();
+
     // Look at scenes/sample.json for the format
     mCamera = object::Camera(data["camera"]);
     for (json i : data["objects"])
@@ -761,6 +766,10 @@ void Scene::load(std::string sceneJsonPath)
         if (p->mSurface == Color::Surface::DIELECTRIC)
         {
             p->mIndexOfRefraction = i["indexOfRefraction"];
+        }
+        if (i["perlin"])
+        {
+            p->mPerlin = &mPerlin;
         }
         try
         {
