@@ -1,11 +1,11 @@
 {
-    "_comment": "Scene contains a box with colored emissive walls. Inside there are 3 spheres, one triangle, and a monkey face.",
+    "_comment": "Standard Cornell box with a checkerboard floor. Contains three spheres, three triangles, one cloud, and a cow.",
     "camera": {
         "_comment": "Camera is straight up and down pointing into the page.",
         "origin": {
             "x": 0,
             "y": 50,
-            "z": 100
+            "z": -0.5
         },
         "front": {
             "x": 0,
@@ -17,7 +17,7 @@
             "y": 1,
             "z": 0
         },
-        "focalLength": 1
+        "focalLength": 0.5
     },
     "objects": [
         {
@@ -36,10 +36,10 @@
             "height": {
                 "x": 0,
                 "y": 0,
-                "z": -100
+                "z": -200
             },
             "surface": "diffuse",
-            "texture": "0x7D7D7D"
+            "texture": "./assets/checkerboard.jpg"
         },
         {
             "_comment": "left wall",
@@ -52,15 +52,15 @@
             "width": {
                 "x": 0,
                 "y": 0,
-                "z": -100
+                "z": -200
             },
             "height": {
                 "x": 0,
-                "y": 100,
+                "y": 200,
                 "z": 0
             },
-            "surface": "emissive",
-            "texture": "0xFF0000"
+            "surface": "diffuse",
+            "texture": "0x00FF00"
         },
         {
             "_comment": "back wall",
@@ -68,7 +68,7 @@
             "origin": {
                 "x": -100,
                 "y": 0,
-                "z": -100
+                "z": -200
             },
             "width": {
                 "x": 200,
@@ -77,11 +77,11 @@
             },
             "height": {
                 "x": 0,
-                "y": 100,
+                "y": 200,
                 "z": 0
             },
-            "surface": "emissive",
-            "texture": "./assets/duwe_react.jpg"
+            "surface": "diffuse",
+            "texture": "0xFFFFFF"
         },
         {
             "_comment": "right wall",
@@ -89,31 +89,52 @@
             "origin": {
                 "x": 100,
                 "y": 0,
-                "z": 0
+                "z": -200
             },
             "width": {
                 "x": 0,
                 "y": 0,
-                "z": -100
+                "z": 200
             },
             "height": {
                 "x": 0,
-                "y": 100,
+                "y": 200,
                 "z": 0
             },
-            "surface": "emissive",
-            "texture": "0x0000FF"
+            "surface": "diffuse",
+            "texture": "0xFF0000"
         },
         {
             "_comment": "ceiling",
             "type": "quad",
             "origin": {
-                "x": -100,
-                "y": 100,
+                "x": 100,
+                "y": 200,
                 "z": 0
             },
             "width": {
-                "x": 200,
+                "x": -200,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 0,
+                "z": -200
+            },
+            "surface": "diffuse",
+            "texture": "0xFFFFFF"
+        },
+        {
+            "_comment": "light",
+            "type": "quad",
+            "origin": {
+                "x": 50,
+                "y": 199.99,
+                "z": -75
+            },
+            "width": {
+                "x": -100,
                 "y": 0,
                 "z": 0
             },
@@ -126,31 +147,31 @@
             "texture": "0xFFFFFF"
         },
         {
-            "_comment": "backlight",
+            "_comment": "front",
             "type": "quad",
             "origin": {
-                "x": -1000,
-                "y": -1000,
-                "z": 600
+                "x": 100,
+                "y": 0,
+                "z": 0
             },
             "width": {
-                "x": 2000,
+                "x": -200,
                 "y": 0,
                 "z": 0
             },
             "height": {
                 "x": 0,
-                "y": 2000,
+                "y": 200,
                 "z": 0
             },
-            "surface": "emissive",
+            "surface": "diffuse",
             "texture": "0xFFFFFF"
         },
         {
             "type": "sphere",
             "x": 0,
             "y": 15,
-            "z": -30,
+            "z": -130,
             "radius": 10,
             "surface": "diffuse",
             "texture": "./assets/duwe_react.jpg"
@@ -159,7 +180,7 @@
             "type": "sphere",
             "x": -50,
             "y": 30,
-            "z": -40,
+            "z": -140,
             "radius": 20,
             "surface": "specular",
             "texture": "0x000000"
@@ -168,7 +189,7 @@
             "type": "sphere",
             "x": 50,
             "y": 30,
-            "z": -50,
+            "z": -150,
             "radius": 25,
             "surface": "dielectric",
             "texture": "0xFFFFFF",
@@ -180,17 +201,17 @@
                 {
                     "x": 40,
                     "y": 40,
-                    "z": -80
+                    "z": -180
                 },
                 {
                     "x": -40,
                     "y": 40,
-                    "z": -80
+                    "z": -180
                 },
                 {
                     "x": 0,
                     "y": 70,
-                    "z": -80
+                    "z": -180
                 }
             ],
             "texcoords": [
@@ -209,32 +230,6 @@
             ],
             "surface": "diffuse",
             "texture": "./assets/duwe_react.jpg"
-        },
-        {
-            "type": "obj",
-            "path": "./assets/suzanne.obj",
-            "surface": "diffuse",
-            "texture": "0x3D7DE3",
-            "origin": {
-                "x": -30,
-                "y": 20,
-                "z": 5
-            },
-            "front": {
-                "x": 0,
-                "y": 0,
-                "z": 1
-            },
-            "top": {
-                "x": 0,
-                "y": 1,
-                "z": 0
-            },
-            "scale": {
-                "x": 10,
-                "y": 10,
-                "z": 10
-            }
         }
     ]
 }
