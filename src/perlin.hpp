@@ -18,7 +18,7 @@ public:
     double get(const Vector &vec);
 
 private:
-    static constexpr double sFrequency = 10000;
+    static constexpr double sFrequency = 0.1; // Good for objects on the 10s to low 100s scale, smaller objects = larger frequency
     static constexpr int sNumPoints = 256;
     std::vector<Vector> mVectors;
     std::vector<int> mPermX;
