@@ -19,12 +19,7 @@ namespace object
 
     void Primitive::textureLookup(const Vector &intersection, double u, double v, Color &color) const
     {
-        if (!mTexture)
-        {
-            color = mColor;
-            return;
-        }
-        color = mTexture->getUv(u, v);
+        color = mTexture ? mTexture->getUv(u, v) : mColor;
         if (mPerlin)
         {
             color.vscale(mPerlin->get(intersection));

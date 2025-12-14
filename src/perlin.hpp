@@ -12,11 +12,13 @@ public:
      * @brief Get the Perlin noise value for a particular location.
      * Can be used to scale texture brightness, modify textures,
      * or generate terrain.
+     *
+     * Outputs a value in the range [0, 1].
      */
     double get(const Vector &vec);
 
 private:
-    static constexpr double sFrequency = 100;
+    static constexpr double sFrequency = 10000;
     static constexpr int sNumPoints = 256;
     std::vector<Vector> mVectors;
     std::vector<int> mPermX;

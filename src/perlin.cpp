@@ -12,6 +12,9 @@ Perlin::Perlin()
     mVectors = std::vector<Vector>(sNumPoints);
     std::generate(mVectors.begin(), mVectors.end(), Vector::svrand3);
 
+    mPermX = std::vector<int>(sNumPoints);
+    mPermY = std::vector<int>(sNumPoints);
+    mPermZ = std::vector<int>(sNumPoints);
     generatePermutations(mPermX);
     generatePermutations(mPermY);
     generatePermutations(mPermZ);
@@ -45,7 +48,7 @@ double Perlin::get(const Vector &vec)
         }
     }
 
-    return interpolate(c, u, v, w);
+    return (interpolate(c, u, v, w) + 1.0) * 0.5; // Remap from [-1, 1] to [0, 1]
 }
 
 double Perlin::interpolate(const Vector c[2][2][2], double u, double v, double w)

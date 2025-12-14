@@ -35,8 +35,6 @@ Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height
 
     mMaxBounces = maxBounces;
 
-    srand(time(NULL));
-
     setupImgPlane();
     Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
     mPinhole = Vector::svsub(mScene.mCamera.mOrigin, focalLength);

@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string>
 #include <ctime>
+#include <cstdlib>
 #include "render.hpp"
 #include "scene.hpp"
 #include "bvh.hpp"
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
 
     try
     {
+        srand(time(NULL));
         std::time_t startTime = std::time(NULL);
 
         Scene s;
