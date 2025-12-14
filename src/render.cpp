@@ -154,8 +154,9 @@ void Render::renderPixel()
         Color pixelColor = {0.0, 0.0, 0.0};
         for (int i = 0; i < mAntiAliasingLevel; i++)
         {
-            Vector v = getImgPlanePixelRandom(nextY, nextX);
-            Ray inRay = Ray(v, Vector::svsub(v, mPinhole).vnorm());
+            Vector origin, dir;
+            getImgPlanePixelRandomDefocus(nextY, nextX, origin, dir);
+            Ray inRay = Ray(origin, dir);
 
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
             for (int j = 0; j < mMaxBounces; j++)
@@ -248,28 +249,22 @@ void Render::setupImgPlane()
     mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(halfTop, halfWidth));
 }
 
-Vector &Render::getImgPlanePixel(int y, int x)
+void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector &dir)
 {
-    Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, y + 0.5));
-    return ret.vadd(ret, Vector::svscale(mPlaneWidth, x + 0.5));
-}
+    // Find a random point on the lens disk, shoot it through the center of
+    // an image plane pixel
+    double randomRadius = randomDouble() * mScene.mCamera.mLensDiskDiameter;
+    double randomAngle = randomDouble() * 2.0 * M_PI;
 
-Vector Render::getImgPlanePixelRandom(int y, int x)
-{
-    double dx = x + randomDouble();
-    double dy = y + randomDouble();
-    Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
-    ret.vadd(Vector::svscale(mPlaneWidth, dx));
-    return ret;
-}
+    // Convert polar to cartesian, scale relative to camera axes, add in camera origin
+    Vector camRight = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).vnorm();
+    Vector randomX = Vector::svscale(camRight, randomRadius * cos(randomAngle));
+    Vector randomY = Vector::svscale(mScene.mCamera.mTop, randomRadius * sin(randomAngle));
+    Vector randomLensPoint = Vector::svadd(mPinhole, Vector::svadd(randomX, randomY));
 
-void Render::getImgPlanePixelMultiple(Vector vectors[], int y, int x)
-{
-    for (int i = 0; i < mAntiAliasingLevel; i++)
-    {
-        double dx = x + randomDouble();
-        double dy = y + randomDouble();
-        vectors[i] = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
-        vectors[i].vadd(Vector::svscale(mPlaneWidth, dx));
-    }
+    // Find vector to image plane pixel, then find vector between lens and
+    // image plane pixel
+    origin = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, y + 0.5));
+    origin.vadd(Vector::svscale(mPlaneWidth, x + 0.5));
+    dir.vsub(origin, randomLensPoint).vnorm();
 }

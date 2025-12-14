@@ -93,9 +93,8 @@ namespace object
         double temp = (1.0 - refractionIndex) / (1.0 + refractionIndex);
         temp = temp * temp;
         double schlick = temp + (1.0 - temp) * pow(1.0 - cosTheta, 5.0);
-        double random = randomDouble();
 
-        if ((refractionIndex * sinTheta > 1.0) || (schlick > random))
+        if ((refractionIndex * sinTheta > 1.0) || (schlick > randomDouble()))
         {
             // No solution for Snell's law, must reflect
             return specular(incoming, intersection, normal);
@@ -103,7 +102,7 @@ namespace object
 
         // See raytracing in one weekend. Complex math based on Snell's law.
         Vector rOutPerp = Vector::svscale(Vector::svadd(incoming.mDir, Vector::svscale(normal, cosTheta)), refractionIndex);
-        Vector rOutParallel = Vector::svscale(normal, -sqrt(fabs(1.0 - Vector::dot(rOutPerp, rOutPerp))));
+        Vector rOutParallel = Vector::svscale(normal, -sqrt(abs(1.0 - Vector::dot(rOutPerp, rOutPerp))));
 
         incoming.mDir.vnorm(Vector::svadd(rOutPerp, rOutParallel));
         incoming.mOrigin = intersection;
@@ -679,6 +678,7 @@ namespace object
                       json["top"]["z"])
                    .vnorm();
         mFocalLength = json["focalLength"];
+        mLensDiskDiameter = tan((double)(json["defocusAngle"]) * (M_PI / 180.0)) * mFocalLength; // tan(angle) = opp / adj
         Primitive::sEmissiveGain = json["emissiveGain"];
     }
 }

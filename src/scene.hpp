@@ -209,6 +209,7 @@ namespace object
         Vector mFront;
         Vector mTop;
         double mFocalLength;
+        double mLensDiskDiameter;
 
         Camera();
         Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength, double emissiveGain);

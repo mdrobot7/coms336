@@ -72,23 +72,8 @@ private:
     void setupImgPlane();
 
     /**
-     * @brief Get a vector that points to the center of the pixel
-     * in the image plane specified by x, y.
+     * @brief Get a vector coming from a particular pixel in the image
+     * plane specified by x, y, accounting for defocus blur.
      */
-    Vector &getImgPlanePixel(int y, int x);
-
-    /**
-     * @brief Get a vector that points to a random location in
-     * the pixel in the image plane specified by x, y.
-     */
-    Vector getImgPlanePixelRandom(int y, int x);
-
-    /**
-     * @brief Get a set of mAntiAliasingLevel vectors randomly
-     * distributed in the pixel of the image plane specified
-     * by x, y.
-     *
-     * @return matrix_t A mAntiAliasingLevel x 3 matrix of row vectors
-     */
-    void getImgPlanePixelMultiple(Vector vectors[], int y, int x);
+    void getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector &dir);
 };
