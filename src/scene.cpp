@@ -78,7 +78,7 @@ namespace object
         double temp = (1.0 - refractionIndex) / (1.0 + refractionIndex);
         temp = temp * temp;
         double schlick = temp + (1.0 - temp) * pow(1.0 - cosTheta, 5.0);
-        double random = rand() / ((double)RAND_MAX + 1.0);
+        double random = randomDouble();
 
         if ((refractionIndex * sinTheta > 1.0) || (schlick > random))
         {
@@ -624,7 +624,7 @@ namespace object
         double timeInVolume = abs(maxT - minT);
 
         // Check against random number, see ray tracing in one weekend
-        double hitTime = mNegInvDensity * log(rand() / (RAND_MAX + 1.0));
+        double hitTime = mNegInvDensity * log(randomDouble());
         if (hitTime > timeInVolume)
         {
             return Collision::MISSED;

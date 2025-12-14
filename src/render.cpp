@@ -11,6 +11,7 @@
 #include "render.hpp"
 #include "vector.hpp"
 #include "bvh.hpp"
+#include "common.hpp"
 
 // Framebuffer indices
 #define R (0)
@@ -256,8 +257,8 @@ Vector &Render::getImgPlanePixel(int y, int x)
 
 Vector Render::getImgPlanePixelRandom(int y, int x)
 {
-    double dx = x + (rand() / ((double)RAND_MAX + 1));
-    double dy = y + (rand() / ((double)RAND_MAX + 1));
+    double dx = x + randomDouble();
+    double dy = y + randomDouble();
     Vector ret = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
     ret.vadd(Vector::svscale(mPlaneWidth, dx));
     return ret;
@@ -267,8 +268,8 @@ void Render::getImgPlanePixelMultiple(Vector vectors[], int y, int x)
 {
     for (int i = 0; i < mAntiAliasingLevel; i++)
     {
-        double dx = x + (rand() / ((double)RAND_MAX + 1));
-        double dy = y + (rand() / ((double)RAND_MAX + 1));
+        double dx = x + randomDouble();
+        double dy = y + randomDouble();
         vectors[i] = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, dy));
         vectors[i].vadd(Vector::svscale(mPlaneWidth, dx));
     }

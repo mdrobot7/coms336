@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <cstdlib>
 
 #define EPSILON (1e-8)
 #define CLOSE_TO(a, b) (abs(a - b) <= EPSILON)
@@ -25,3 +26,13 @@
        __typeof__ (lower) _lower = (lower); \
        __typeof__ (upper) _upper = (upper); \
      (MIN(MAX(_val, _lower), _upper)); }))
+
+/**
+ * @brief Returns a random double in range [0, 1)
+ *
+ * @return double
+ */
+static inline double randomDouble()
+{
+  return rand() / (RAND_MAX + 1.0);
+}
