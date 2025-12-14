@@ -102,7 +102,7 @@ namespace object
 
         // See raytracing in one weekend. Complex math based on Snell's law.
         Vector rOutPerp = Vector::svscale(Vector::svadd(incoming.mDir, Vector::svscale(normal, cosTheta)), refractionIndex);
-        Vector rOutParallel = Vector::svscale(normal, -sqrt(abs(1.0 - Vector::dot(rOutPerp, rOutPerp))));
+        Vector rOutParallel = Vector::svscale(normal, -sqrt(std::abs(1.0 - Vector::dot(rOutPerp, rOutPerp))));
 
         incoming.mDir.vnorm(Vector::svadd(rOutPerp, rOutParallel));
         incoming.mOrigin = intersection;
@@ -302,7 +302,7 @@ namespace object
 
         // Take the negative of the +/-, we want the smaller t (closer point)
         t = (-b - sqrt(discriminant)) / (2.0 * a);
-        if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(fabs(t), 0.0))
+        if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(std::abs(t), 0.0))
         {
             // Dielectrics change ray direction at the surface of
             // the object. That leads to a lot of false Collision::MISSEDs
@@ -437,7 +437,7 @@ namespace object
         {
             // Take the negative of the +/-, we want the smaller t (closer point)
             t = (-b - sqrt(discriminant)) / (2.0 * a);
-            if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(fabs(t), 0.0))
+            if (mSurface == Color::Surface::DIELECTRIC && CLOSE_TO(std::abs(t), 0.0))
             {
                 // Dielectrics change ray direction at the surface of
                 // the object. That leads to a lot of false Collision::MISSEDs
@@ -789,7 +789,7 @@ namespace object
                 return Collision::MISSED;
             }
         }
-        double timeInVolume = abs(maxT - minT);
+        double timeInVolume = std::abs(maxT - minT);
 
         // Check against random number, see ray tracing in one weekend
         double hitTime = mNegInvDensity * log(randomDouble());
