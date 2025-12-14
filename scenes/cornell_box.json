@@ -39,7 +39,8 @@
                 "z": -200
             },
             "surface": "diffuse",
-            "texture": "./assets/checkerboard.jpg"
+            "texture": "./assets/checkerboard.jpg",
+            "perlin": false
         },
         {
             "_comment": "left wall",
@@ -60,7 +61,8 @@
                 "z": 0
             },
             "surface": "diffuse",
-            "texture": "0x00FF00"
+            "texture": "0x00FF00",
+            "perlin": false
         },
         {
             "_comment": "back wall",
@@ -81,7 +83,8 @@
                 "z": 0
             },
             "surface": "diffuse",
-            "texture": "0xFFFFFF"
+            "texture": "0xFFFFFF",
+            "perlin": false
         },
         {
             "_comment": "right wall",
@@ -102,7 +105,8 @@
                 "z": 0
             },
             "surface": "diffuse",
-            "texture": "0xFF0000"
+            "texture": "0xFF0000",
+            "perlin": false
         },
         {
             "_comment": "ceiling",
@@ -123,7 +127,8 @@
                 "z": -200
             },
             "surface": "diffuse",
-            "texture": "0xFFFFFF"
+            "texture": "0xFFFFFF",
+            "perlin": false
         },
         {
             "_comment": "light",
@@ -144,7 +149,8 @@
                 "z": -100
             },
             "surface": "emissive",
-            "texture": "0xFFFFFF"
+            "texture": "0xFFFFFF",
+            "perlin": false
         },
         {
             "_comment": "front",
@@ -165,7 +171,8 @@
                 "z": 0
             },
             "surface": "diffuse",
-            "texture": "0xFFFFFF"
+            "texture": "0xFFFFFF",
+            "perlin": false
         },
         {
             "type": "sphere",
@@ -174,7 +181,8 @@
             "z": -130,
             "radius": 10,
             "surface": "diffuse",
-            "texture": "./assets/duwe_react.jpg"
+            "texture": "./assets/duwe_react.jpg",
+            "perlin": false
         },
         {
             "type": "sphere",
@@ -183,7 +191,8 @@
             "z": -140,
             "radius": 20,
             "surface": "specular",
-            "texture": "0x000000"
+            "texture": "0x000000",
+            "perlin": false
         },
         {
             "type": "sphere",
@@ -192,8 +201,9 @@
             "z": -150,
             "radius": 25,
             "surface": "dielectric",
+            "indexOfRefraction": 1.458,
             "texture": "0xFFFFFF",
-            "indexOfRefraction": 1.458
+            "perlin": false
         },
         {
             "type": "triangle",
@@ -229,7 +239,8 @@
                 }
             ],
             "surface": "diffuse",
-            "texture": "./assets/duwe_react.jpg"
+            "texture": "./assets/duwe_react.jpg",
+            "perlin": false
         },
         {
             "type": "sphereVolume",
@@ -239,7 +250,18 @@
             "radius": 15,
             "density": 0.05,
             "surface": "diffuse",
-            "texture": "0xFF8000"
+            "texture": "0xFF8000",
+            "perlin": false
+        },
+        {
+            "type": "sphere",
+            "x": 60,
+            "y": 30,
+            "z": -60,
+            "radius": 20,
+            "surface": "diffuse",
+            "texture": "0xFFFFFF",
+            "perlin": true
         }
     ]
 }
