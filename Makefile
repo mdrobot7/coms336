@@ -28,11 +28,11 @@ ifneq ($(wildcard ./venv/Scripts/activate),)
 $(eval PYTHON := ./venv/Scripts/python.exe)
 $(eval PIP := ./venv/Scripts/pip.exe)
 else ifneq ($(wildcard ./venv/bin/activate),)
-$(eval PYTHON := ./venv/bin/python)
-$(eval PIP := ./venv/bin/pip)
+$(eval PYTHON := ./venv/bin/python3)
+$(eval PIP := ./venv/bin/pip3)
 else
 $(info Python venv not found, generating...)
-$(shell python -m venv ./venv)
+$(shell python3 -m venv ./venv)
 endif
 
 all: $(BUILD_DIR)/$(TARGET_EXE) compiledb
