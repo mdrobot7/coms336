@@ -159,7 +159,7 @@ void Render::renderPixel()
             Ray inRay = Ray(v, Vector::svsub(v, mPinhole).vnorm());
 
             // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
-            for (int i = 0; i < mMaxBounces; i++)
+            for (int j = 0; j < mMaxBounces; j++)
             {
                 // Check BVH
                 Ray outRay;
@@ -167,6 +167,12 @@ void Render::renderPixel()
                 Color color;
                 object::Primitive::Collision collision = mBvh.intersects(inRay, outRay, t, color);
                 inRay = Ray(outRay);
+
+                if (color.closeToZero())
+                {
+                    // Call the pixel black and move on, no point in simulating anything else
+                    break;
+                }
 
                 if (collision == object::Primitive::Collision::REFLECTED)
                 {

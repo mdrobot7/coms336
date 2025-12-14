@@ -103,6 +103,16 @@ public:
         Vector v;
         return v.vrand3();
     }
+
+    /**
+     * @brief Returns true if all three of a vector's dimensions
+     * are close to 0. False otherwise.
+     */
+    bool closeToZero() const;
+    static inline bool closeToZero(const Vector &a)
+    {
+        return a.closeToZero();
+    }
 };
 
 class ModelMatrix

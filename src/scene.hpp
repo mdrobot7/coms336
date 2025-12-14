@@ -57,12 +57,12 @@ namespace object
          * @brief Calculate a ray's reflection based on the surface type,
          * set the final ray color, and return the reflection type.
          *
-         * @param incoming
-         * @param intersection
-         * @param normal
+         * @param incoming Incoming ray to be bounced
+         * @param intersection Intersection point
+         * @param normal Normal vector of the surface at intersection point
          * @return enum Collision
          */
-        enum Collision bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const;
+        enum Collision bounce(Ray &incoming, const Vector &intersection, const Vector &normal) const;
 
         /**
          * @brief Handle a specular reflection.
@@ -207,7 +207,7 @@ public:
     std::vector<std::string> mObjFilenames;
 
     // List of textures
-    std::vector<STBImage> mTextures;
+    std::vector<std::unique_ptr<STBImage>> mTextures;
     std::vector<std::string> mTextureFilenames;
 
     Scene();

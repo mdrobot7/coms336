@@ -1,4 +1,5 @@
 #include "vector.hpp"
+#include "common.hpp"
 #include <stdexcept>
 #include <cmath>
 #include <cstdlib>
@@ -119,7 +120,7 @@ Vector &Vector::vrand3()
     v[0] = (double)(rand() - RAND_MAX / 2);
     v[1] = (double)(rand() - RAND_MAX / 2);
     v[2] = (double)(rand() - RAND_MAX / 2);
-    return *this;
+    return this->vnorm();
 }
 
 ModelMatrix::ModelMatrix() {}
@@ -165,4 +166,9 @@ Vector &ModelMatrix::mul(Vector &vec3) const
 
     vec3 = temp;
     return vec3;
+}
+
+bool Vector::closeToZero() const
+{
+    return CLOSE_TO(v[0], 0.0) && CLOSE_TO(v[1], 0.0) && CLOSE_TO(v[2], 0.0);
 }

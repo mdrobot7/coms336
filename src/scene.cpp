@@ -17,7 +17,7 @@ namespace object
         return BoundingBox();
     }
 
-    enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal, Color &color) const
+    enum Primitive::Collision Primitive::bounce(Ray &incoming, const Vector &intersection, const Vector &normal) const
     {
         switch (mSurface)
         {
@@ -51,7 +51,15 @@ namespace object
     {
         // Reflect 1 ray with a Lambertian reflection
         incoming.mOrigin = intersection;
-        incoming.mDir.vnorm(Vector::svadd(normal, Vector::svrand3()));
+        Vector scatterDirection = Vector::svadd(normal, Vector::svrand3());
+        if (scatterDirection.closeToZero())
+        {
+            incoming.mDir = normal;
+        }
+        else
+        {
+            incoming.mDir = scatterDirection.vnorm();
+        }
         return true;
     }
 
@@ -185,7 +193,7 @@ namespace object
         }
 
         // Bounce it
-        return bounce(incoming, intersection, mNormal, color);
+        return bounce(incoming, intersection, mNormal);
     }
 
     BoundingBox Triangle::boundingBox() const
@@ -289,7 +297,7 @@ namespace object
         }
 
         // Bounce it
-        return bounce(incoming, intersection, normal, color);
+        return bounce(incoming, intersection, normal);
     }
 
     BoundingBox Sphere::boundingBox() const
@@ -404,7 +412,7 @@ namespace object
         }
 
         // Bounce it
-        return bounce(incoming, intersection, mNormal, color);
+        return bounce(incoming, intersection, mNormal);
     }
 
     BoundingBox Quad::boundingBox() const
@@ -614,9 +622,9 @@ Scene::Scene() {}
 
 Scene::~Scene()
 {
-    for (STBImage i : mTextures)
+    for (const auto &i : mTextures)
     {
-        i.free();
+        i->free();
     }
 }
 
@@ -708,10 +716,10 @@ void Scene::load(std::string sceneJsonPath)
             }
             if (fileIndex == mTextureFilenames.size())
             {
-                mTextures.push_back(STBImage(i["texture"]));
+                mTextures.push_back(std::make_unique<STBImage>(i["texture"]));
                 mTextureFilenames.push_back(i["texture"]);
             }
-            p->mTexture = &mTextures[fileIndex];
+            p->mTexture = mTextures[fileIndex].get();
         }
     }
 
