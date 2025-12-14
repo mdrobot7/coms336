@@ -230,6 +230,16 @@
             ],
             "surface": "diffuse",
             "texture": "./assets/duwe_react.jpg"
+        },
+        {
+            "type": "sphereVolume",
+            "x": -60,
+            "y": 30,
+            "z": -80,
+            "radius": 15,
+            "density": 0.05,
+            "surface": "diffuse",
+            "texture": "0xFF8000"
         }
     ]
 }

@@ -135,8 +135,8 @@ namespace object
         Sphere(const Vector &origin, double radius, enum Color::Surface surface, double indexOfRefraction, const Color &color);
         Sphere(nlohmann::json &json);
 
-        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
-        BoundingBox boundingBox() const override;
+        virtual enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        virtual BoundingBox boundingBox() const override;
 
     private:
         void textureLookup(Vector &intersection, Color &color) const;
@@ -172,6 +172,20 @@ namespace object
         Model(nlohmann::json &json, tinyobj::ObjReader &obj);
 
         enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        // No texture lookup support
+        BoundingBox boundingBox() const override;
+    };
+
+    class SphereVolume : public Sphere
+    {
+    public:
+        double mNegInvDensity;
+
+        SphereVolume(const Vector &origin, double radius, double density, Color &color);
+        SphereVolume(nlohmann::json &json);
+
+        enum Collision collide(Ray &incoming, double &t, Color &color) const override;
+        // No texture lookup support
         BoundingBox boundingBox() const override;
     };
 

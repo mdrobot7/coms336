@@ -135,8 +135,6 @@ namespace object
         // Assuming CCW winding order (standard for OBJ and OpenGL)
         mNormal.cross3(Vector::svsub(mVertices[1], mVertices[0]), Vector::svsub(mVertices[2], mVertices[1]));
         mNormal.vnorm();
-
-        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Triangle::collide(Ray &incoming, double &t, Color &color) const
@@ -242,8 +240,6 @@ namespace object
                          json["z"]);
         mRadius = json["radius"];
         mTexture = NULL;
-
-        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Sphere::collide(Ray &incoming, double &t, Color &color) const
@@ -364,8 +360,6 @@ namespace object
         Vector widthCrossHeight = Vector::scross3(mWidth, mHeight);
         mNormal = Vector::svnorm(widthCrossHeight);
         mW = Vector::svscale(widthCrossHeight, 1.0 / Vector::dot(widthCrossHeight, widthCrossHeight));
-
-        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Quad::collide(Ray &incoming, double &t, Color &color) const
@@ -469,8 +463,6 @@ namespace object
             Vector(json["scale"]["x"],
                    json["scale"]["y"],
                    json["scale"]["z"]));
-
-        mBoundingBox = boundingBox();
     }
 
     enum Primitive::Collision Model::collide(Ray &incoming, double &t, Color &color) const
@@ -591,6 +583,73 @@ namespace object
         return BoundingBox(minX, maxX, minY, maxY, minZ, maxZ);
     }
 
+    SphereVolume::SphereVolume(const Vector &origin, double radius, double density, Color &color) : Sphere(origin, radius, Color::Surface::DIFFUSE, 0, color)
+    {
+        mNegInvDensity = -1.0 / density;
+    }
+
+    SphereVolume::SphereVolume(nlohmann::json &json) : Sphere(json)
+    {
+        mNegInvDensity = -1.0 / (double)(json["density"]);
+    }
+
+    enum Primitive::Collision SphereVolume::collide(Ray &incoming, double &t, Color &color) const
+    {
+        // Find the length of time the ray spends inside of the volume.
+        // Stolen from the sphere method -- can't fully reuse, it needs some modifications
+        Vector centerMinusIncoming = Vector::svsub(mOrigin, incoming.mOrigin);
+        double a = Vector::dot(incoming.mDir, incoming.mDir);
+        double b = -2.0 * Vector::dot(incoming.mDir, centerMinusIncoming);
+        double c = Vector::dot(centerMinusIncoming, centerMinusIncoming) - mRadius * mRadius;
+        double discriminant = b * b - 4.0 * a * c;
+        double minT, maxT;
+        if (discriminant < 0)
+        {
+            return Collision::MISSED;
+        }
+        else
+        {
+            t = minT = (-b - sqrt(discriminant)) / (2.0 * a);
+            maxT = (-b + sqrt(discriminant)) / (2.0 * a);
+
+            if (t < 0)
+            {
+                return Collision::MISSED;
+            }
+            else if (CLOSE_TO(t, 0.0))
+            {
+                return Collision::MISSED;
+            }
+        }
+        double timeInVolume = abs(maxT - minT);
+
+        // Check against random number, see ray tracing in one weekend
+        double hitTime = mNegInvDensity * log(rand() / (RAND_MAX + 1.0));
+        if (hitTime > timeInVolume)
+        {
+            return Collision::MISSED;
+        }
+
+        Vector intersection = Vector::svadd(incoming.mOrigin, Vector::svscale(incoming.mDir, hitTime));
+
+        if (mSurface == Color::SPECULAR || mSurface == Color::DIELECTRIC)
+        {
+            color = Color(1, 1, 1);
+        }
+        else
+        {
+            color = mColor;
+        }
+
+        // Bounce it, specular/emissive clouds could be funky
+        return bounce(incoming, intersection, Vector::svrand3());
+    }
+
+    BoundingBox SphereVolume::boundingBox() const
+    {
+        return Sphere::boundingBox();
+    }
+
     Camera::Camera() {}
 
     Camera::Camera(const Vector &origin, const Vector &front, const Vector &top, double focalLength)
@@ -685,6 +744,10 @@ void Scene::load(std::string sceneJsonPath)
         {
             mPrimitives.push_back(std::make_unique<object::Quad>(i));
         }
+        else if (i["type"] == "sphereVolume")
+        {
+            mPrimitives.push_back(std::make_unique<object::SphereVolume>(i));
+        }
         else
         {
             f.close();
@@ -694,6 +757,7 @@ void Scene::load(std::string sceneJsonPath)
         // Fill in common attributes
         auto &p = mPrimitives.back();
         p->mSurface = Color::stringToSurface(i["surface"]);
+        p->mBoundingBox = p->boundingBox();
         if (p->mSurface == Color::Surface::DIELECTRIC)
         {
             p->mIndexOfRefraction = i["indexOfRefraction"];
@@ -705,6 +769,11 @@ void Scene::load(std::string sceneJsonPath)
         }
         catch (std::invalid_argument const &)
         {
+            if (i["type"] == "sphereVolume")
+            {
+                throw std::invalid_argument("Can't assign textures to volumes.");
+            }
+
             // Texture is a path instead of a color
             size_t fileIndex;
             for (fileIndex = 0; fileIndex < mTextureFilenames.size(); fileIndex++)
