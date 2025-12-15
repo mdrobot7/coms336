@@ -2,6 +2,10 @@ build/*
 *.ppm
 .vscode/*
 render.exe.stackdump
-docs/latex_aux/
 venv/
 **/__pycache__/*
+docs/*.aux
+docs/*.bbl
+docs/*.blg
+docs/*.log
+docs/*.pdf

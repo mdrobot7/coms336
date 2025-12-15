@@ -57,7 +57,12 @@ compiledb: $(BUILD_DIR)/$(TARGET_EXE)
 	$(PYTHON) -m compiledb -n -o $(BUILD_DIR)/compile_commands.json make
 
 documentation:
-	pdflatex -halt-on-error -output-directory=docs -job-name=docs -aux-directory=docs/latex_aux ./docs/main.tex
+# Make initial doc, make bibliography, put everything together, then do it again for good measure
+# https://tex.stackexchange.com/questions/204291/bibtex-latex-compiling
+	pdflatex -halt-on-error -output-directory=docs -aux-directory=docs ./docs/main.tex
+	bibtex -include-directory=docs ./docs/main.aux
+	pdflatex -halt-on-error -output-directory=docs -aux-directory=docs ./docs/main.tex
+	pdflatex -halt-on-error -output-directory=docs -aux-directory=docs ./docs/main.tex
 
 setup:
 	mkdir -p ./.vscode
