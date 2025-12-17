@@ -5,7 +5,7 @@ Requires GCC (supporting C++11 or newer) and Make. Developed on Windows 11 using
 
 ```
 make all
-./build/render.exe
+./build/render
 ```
 
 ### Software Requirements

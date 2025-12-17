@@ -1,4 +1,4 @@
-TARGET_EXE := render.exe
+TARGET_EXE := render
 BUILD_DIR := ./build
 SRC_DIR := ./src
 LIB_DIR := ./lib
