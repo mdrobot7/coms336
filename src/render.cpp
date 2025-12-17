@@ -137,7 +137,7 @@ void Render::renderPixel()
 {
     std::random_device rd;
     randGen = std::mt19937(rd());
-    randDist = std::uniform_real_distribution(-1.0, 1.0);
+    randDist = std::uniform_real_distribution<>(-1.0, 1.0);
     while (!mKillThreads)
     {
         mNextPixelLock.lock();
