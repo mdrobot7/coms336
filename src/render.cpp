@@ -18,6 +18,10 @@
 #define G (1)
 #define B (2)
 
+// Defined in common.hpp
+thread_local std::mt19937 randGen;
+thread_local std::uniform_real_distribution<> randDist;
+
 Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene), mBvh(bvh)
 {
     mWidth = width;
@@ -131,6 +135,9 @@ int Render::save(std::string filename)
 
 void Render::renderPixel()
 {
+    std::random_device rd;
+    randGen = std::mt19937(rd());
+    randDist = std::uniform_real_distribution(-1.0, 1.0);
     while (!mKillThreads)
     {
         mNextPixelLock.lock();

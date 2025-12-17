@@ -130,9 +130,9 @@ Vector &Vector::vclip(const Vector &a, double clip)
 
 Vector &Vector::vrand3()
 {
-    v[0] = (double)(rand() - RAND_MAX / 2);
-    v[1] = (double)(rand() - RAND_MAX / 2);
-    v[2] = (double)(rand() - RAND_MAX / 2);
+    v[0] = randDist(randGen);
+    v[1] = randDist(randGen);
+    v[2] = randDist(randGen);
     return this->vnorm();
 }
 

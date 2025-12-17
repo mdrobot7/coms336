@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <random>
 
 #define EPSILON (1e-8)
 #define CLOSE_TO(a, b) (std::abs(a - b) <= EPSILON)
@@ -27,6 +28,9 @@
        __typeof__ (upper) _upper = (upper); \
      (MIN(MAX(_val, _lower), _upper)); }))
 
+extern thread_local std::mt19937 randGen;                      // Defined in render.cpp
+extern thread_local std::uniform_real_distribution<> randDist; // Uniform [-1.0, 1.0) distribution, defined in render.cpp
+
 /**
  * @brief Returns a random double in range [0, 1)
  *
@@ -34,5 +38,5 @@
  */
 static inline double randomDouble()
 {
-  return rand() / (RAND_MAX + 1.0);
+  return (randDist(randGen) + 1.0) / 2.0;
 }

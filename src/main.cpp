@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
 
     try
     {
-        srand(time(NULL));
         std::time_t startTime = std::time(NULL);
 
         Scene s;

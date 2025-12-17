@@ -107,7 +107,7 @@ public:
 
     /**
      * @brief Return a random normalized 3-dimensional vector.
-     * Uses rand() and assumes srand() has already been called.
+     * Uses thread-safe C++ random number generation.
      */
     Vector &vrand3();
     static inline Vector svrand3()
