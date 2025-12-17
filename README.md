@@ -28,7 +28,6 @@ make all
 
 ## Future Improvements
 - Potential idea: Refactor json files into objects list and index list. Could allow more reusability
-- Use thread-safe `rand()` calls. Linux has horrible performance because `rand()` is used so often and it locks up threads on an internal mutex.
 
 ## Tasks
 - [x] A camera with configurable position, orientation, and field of view
