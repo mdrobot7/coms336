@@ -97,7 +97,7 @@ int Render::run()
             }
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     std::cout << std::endl;
 
@@ -269,9 +269,13 @@ void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector 
     Vector randomY = Vector::svscale(mScene.mCamera.mTop, randomRadius * sin(randomAngle));
     Vector randomLensPoint = Vector::svadd(mPinhole, Vector::svadd(randomX, randomY));
 
+    // Randomize location inside image plane pixel
+    Vector dx = Vector::svscale(mPlaneWidth, x + randomDouble());
+    Vector dy = Vector::svscale(mPlaneHeight, y + randomDouble());
+
     // Find vector to image plane pixel, then find vector between lens and
     // image plane pixel
-    origin = Vector::svadd(mPlaneOrigin, Vector::svscale(mPlaneHeight, y + 0.5));
-    origin.vadd(Vector::svscale(mPlaneWidth, x + 0.5));
+    origin = Vector::svadd(mPlaneOrigin, dy);
+    origin.vadd(dx);
     dir.vsub(origin, randomLensPoint).vnorm();
 }
