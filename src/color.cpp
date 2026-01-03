@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include "color.hpp"
+#include <cstdint>
 
 const std::map<std::string, enum Color::Surface> Color::sSurfaceMap = {
     {"specular", Color::SPECULAR},
