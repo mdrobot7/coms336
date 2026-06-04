@@ -1,6 +1,7 @@
 build/*
 *.ppm
 .vscode/*
+.cache/*
 render.exe.stackdump
 venv/
 **/__pycache__/*

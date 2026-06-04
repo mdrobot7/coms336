@@ -4,6 +4,7 @@
 Requires GCC (supporting C++11 or newer) and Make. Developed on Windows 11 using MSYS2, but presumably will work on Linux/Mac too.
 
 ```
+make setup
 make all
 ./build/render
 ```

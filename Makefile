@@ -25,14 +25,22 @@ comma := ,
 LDFLAGS := -Wl,$(subst $(space),$(comma),$(LDFLAGS))
 
 ifneq ($(wildcard ./venv/Scripts/activate),)
-$(eval PYTHON := ./venv/Scripts/python.exe)
-$(eval PIP := ./venv/Scripts/pip.exe)
+  $(eval PYTHON := ./venv/Scripts/python.exe)
+  $(eval PIP := ./venv/Scripts/pip.exe)
 else ifneq ($(wildcard ./venv/bin/activate),)
-$(eval PYTHON := ./venv/bin/python3)
-$(eval PIP := ./venv/bin/pip3)
+  $(eval PYTHON := ./venv/bin/python3)
+  $(eval PIP := ./venv/bin/pip3)
 else
-$(info Python venv not found, generating...)
-$(shell python3 -m venv ./venv)
+  $(info Python venv not found, generating...)
+  $(shell python3 -m venv ./venv)
+
+  ifneq ($(wildcard ./venv/Scripts/activate),)
+    $(eval PYTHON := ./venv/Scripts/python.exe)
+    $(eval PIP := ./venv/Scripts/pip.exe)
+  else ifneq ($(wildcard ./venv/bin/activate),)
+    $(eval PYTHON := ./venv/bin/python3)
+    $(eval PIP := ./venv/bin/pip3)
+  endif
 endif
 
 all: $(BUILD_DIR)/$(TARGET_EXE) compiledb
