@@ -1,9 +1,9 @@
 #include "perlin.hpp"
 
-#include <random>
-#include <cstdlib>
-#include <algorithm>
 #include "common.hpp"
+#include <algorithm>
+#include <cstdlib>
+#include <random>
 
 Perlin::Perlin()
 {
@@ -30,9 +30,9 @@ double Perlin::get(const Vector &vec)
     double v = sVec[V_Y] - std::floor(sVec[V_Y]);
     double w = sVec[V_Z] - std::floor(sVec[V_Z]);
 
-    int i = (int)(sVec[V_X]);
-    int j = (int)(sVec[V_Y]);
-    int k = (int)(sVec[V_Z]);
+    int    i = (int)(sVec[V_X]);
+    int    j = (int)(sVec[V_Y]);
+    int    k = (int)(sVec[V_Z]);
     Vector c[2][2][2];
 
     for (int di = 0; di < 2; di++)
@@ -41,8 +41,7 @@ double Perlin::get(const Vector &vec)
         {
             for (int dk = 0; dk < 2; dk++)
             {
-                c[di][dj][dk] = mVectors[mPermX[(i + di) & 255] ^
-                                         mPermY[(j + dj) & 255] ^
+                c[di][dj][dk] = mVectors[mPermX[(i + di) & 255] ^ mPermY[(j + dj) & 255] ^
                                          mPermZ[(k + dk) & 255]];
             }
         }
@@ -54,9 +53,9 @@ double Perlin::get(const Vector &vec)
 double Perlin::interpolate(const Vector c[2][2][2], double u, double v, double w)
 {
     // Hermitian smoothing
-    double uu = u * u * (3 - 2 * u);
-    double vv = v * v * (3 - 2 * v);
-    double ww = w * w * (3 - 2 * w);
+    double uu    = u * u * (3 - 2 * u);
+    double vv    = v * v * (3 - 2 * v);
+    double ww    = w * w * (3 - 2 * w);
     double accum = 0.0;
 
     for (int i = 0; i < 2; i++)
@@ -80,8 +79,7 @@ double Perlin::interpolate(const Vector c[2][2][2], double u, double v, double w
 void Perlin::generatePermutations(std::vector<int> &perms)
 {
     int count = 0;
-    std::generate(perms.begin(), perms.end(), [&]()
-                  { return ++count; });
+    std::generate(perms.begin(), perms.end(), [&]() { return ++count; });
     auto random = std::default_random_engine{};
     std::shuffle(perms.begin(), perms.end(), random);
 }

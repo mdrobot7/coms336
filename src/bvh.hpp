@@ -1,20 +1,21 @@
 #pragma once
 
-#include <vector>
-#include "ray.hpp"
 #include "boundingBox.hpp"
-#include "scene.hpp"
 #include "color.hpp"
+#include "ray.hpp"
+#include "scene.hpp"
+#include <vector>
 
 class BoundingVolumeHierarchy
 {
-public:
+  public:
     object::Primitive *mPrimitive;
-    BoundingBox mBbox;
+    BoundingBox        mBbox;
 
     BoundingVolumeHierarchy();
     BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives);
-    BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives, size_t start, size_t end);
+    BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives,
+                            size_t start, size_t end);
     ~BoundingVolumeHierarchy();
 
     /**
@@ -27,15 +28,19 @@ public:
      * If any level of the BVH results in misses for both the
      * left and right child the method returns NULL.
      */
-    object::Primitive::Collision intersects(const Ray &incoming, Ray &outgoing, double &t, Color &color);
+    object::Primitive::Collision intersects(const Ray &incoming, Ray &outgoing, double &t,
+                                            Color &color);
 
-private:
+  private:
     BoundingVolumeHierarchy *mLeft;
     BoundingVolumeHierarchy *mRight;
 
     void destroySubtree(BoundingVolumeHierarchy *subtree);
 
-    static bool compare_x(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
-    static bool compare_y(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
-    static bool compare_z(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b);
+    static bool compare_x(const std::unique_ptr<object::Primitive> &a,
+                          const std::unique_ptr<object::Primitive> &b);
+    static bool compare_y(const std::unique_ptr<object::Primitive> &a,
+                          const std::unique_ptr<object::Primitive> &b);
+    static bool compare_z(const std::unique_ptr<object::Primitive> &a,
+                          const std::unique_ptr<object::Primitive> &b);
 };

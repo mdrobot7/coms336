@@ -5,9 +5,9 @@ Ray::Ray() {}
 
 Ray::Ray(Vector origin, Vector dir)
 {
-    mOrigin = origin;
-    mDir = dir;
-    mColor = Color(1.0, 1.0, 1.0);
+    mOrigin            = origin;
+    mDir               = dir;
+    mColor             = Color(1.0, 1.0, 1.0);
     mIndexOfRefraction = 1.0; // Air
 }
 

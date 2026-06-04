@@ -4,7 +4,7 @@
 
 class BoundingBox
 {
-public:
+  public:
     static constexpr double sPadding = 0.001; // Padding between the object and bounding box
 
     double mIntersections[3][2];
@@ -36,7 +36,7 @@ public:
      */
     static bool compare(const BoundingBox &a, const BoundingBox &b, int axis);
 
-private:
+  private:
     /**
      * @brief Calculate time in which the ray intersects a
      * particular point along a particular axis.

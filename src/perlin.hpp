@@ -1,11 +1,11 @@
 #pragma once
 
-#include <vector>
 #include "vector.hpp"
+#include <vector>
 
 class Perlin
 {
-public:
+  public:
     Perlin();
 
     /**
@@ -17,13 +17,15 @@ public:
      */
     double get(const Vector &vec);
 
-private:
-    static constexpr double sFrequency = 0.2; // Good for objects on the 10s to low 100s scale, smaller objects = larger frequency
+  private:
+    // Good for objects on the 10s to low 100s scale, smaller objects = larger frequency
+    static constexpr double sFrequency = 0.2;
+
     static constexpr int sNumPoints = 256;
-    std::vector<Vector> mVectors;
-    std::vector<int> mPermX;
-    std::vector<int> mPermY;
-    std::vector<int> mPermZ;
+    std::vector<Vector>  mVectors;
+    std::vector<int>     mPermX;
+    std::vector<int>     mPermY;
+    std::vector<int>     mPermZ;
 
     /**
      * @brief Perform Perlin interpolation.

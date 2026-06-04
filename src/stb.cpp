@@ -21,8 +21,9 @@ Color STBImage::get(int y, int x)
 {
     y = CLAMP(y, 0, mHeight - 1);
     x = CLAMP(x, 0, mWidth - 1);
-    int widthBytes = mWidth * mChannels;
-    const unsigned char *offset = mImage + y * widthBytes + x * mChannels;
+
+    int                  widthBytes = mWidth * mChannels;
+    const unsigned char *offset     = mImage + y * widthBytes + x * mChannels;
     return Color(Vector(offset[0] / 255.0, offset[1] / 255.0, offset[2] / 255.0));
 }
 

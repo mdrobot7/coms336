@@ -1,6 +1,6 @@
-#include <stdexcept>
 #include "color.hpp"
 #include <cstdint>
+#include <stdexcept>
 
 const std::map<std::string, enum Color::Surface> Color::sSurfaceMap = {
     {"specular", Color::SPECULAR},
@@ -43,7 +43,8 @@ Color Color::intToColor(int i)
 
 int Color::colorToInt(Color c)
 {
-    return (((uint8_t)(c[0] * 256)) << 16) | (((uint8_t)(c[1] * 256)) << 8) | ((uint8_t)(c[2] * 256));
+    return (((uint8_t)(c[0] * 256)) << 16) | (((uint8_t)(c[1] * 256)) << 8) |
+           ((uint8_t)(c[2] * 256));
 }
 
 Color Color::attenuate(Color surface, Color incoming)

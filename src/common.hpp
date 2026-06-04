@@ -10,26 +10,33 @@
 // In range, inclusive
 #define IN_RANGE(x, min, max) ((x) >= (min) && (x) <= (max))
 
-#define MAX(a, b) \
-  ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })
+#define MAX(a, b)                                                                                  \
+    ({                                                                                             \
+        __typeof__(a) _a = (a);                                                                    \
+        __typeof__(b) _b = (b);                                                                    \
+        _a > _b ? _a : _b;                                                                         \
+    })
 
-#define MIN(a, b) \
-  ({ __typeof__ (a) _a = (a); \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })
+#define MIN(a, b)                                                                                  \
+    ({                                                                                             \
+        __typeof__(a) _a = (a);                                                                    \
+        __typeof__(b) _b = (b);                                                                    \
+        _a < _b ? _a : _b;                                                                         \
+    })
 
 // Clamp value to within the range [lower, upper], saturating at
 // the bounds if necessary.
-#define CLAMP(val, lower, upper) \
-  (({ __typeof__ (val) _val = (val); \
-       __typeof__ (lower) _lower = (lower); \
-       __typeof__ (upper) _upper = (upper); \
-     (MIN(MAX(_val, _lower), _upper)); }))
+#define CLAMP(val, lower, upper)                                                                   \
+    (({                                                                                            \
+        __typeof__(val)   _val   = (val);                                                          \
+        __typeof__(lower) _lower = (lower);                                                        \
+        __typeof__(upper) _upper = (upper);                                                        \
+        (MIN(MAX(_val, _lower), _upper));                                                          \
+    }))
 
-extern thread_local std::mt19937 randGen;                      // Defined in render.cpp
-extern thread_local std::uniform_real_distribution<> randDist; // Uniform [-1.0, 1.0) distribution, defined in render.cpp
+extern thread_local std::mt19937                     randGen;  // Defined in render.cpp
+extern thread_local std::uniform_real_distribution<> randDist; // Uniform [-1.0, 1.0) distribution,
+                                                               // defined in render.cpp
 
 /**
  * @brief Returns a random double in range [0, 1)
@@ -38,5 +45,5 @@ extern thread_local std::uniform_real_distribution<> randDist; // Uniform [-1.0,
  */
 static inline double randomDouble()
 {
-  return (randDist(randGen) + 1.0) / 2.0;
+    return (randDist(randGen) + 1.0) / 2.0;
 }

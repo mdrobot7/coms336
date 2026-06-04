@@ -2,14 +2,14 @@
 
 #include <string>
 
-#include "stb_image.h"
 #include "color.hpp"
+#include "stb_image.h"
 
 class STBImage
 {
-public:
+  public:
     const unsigned char *mImage;
-    int mWidth, mHeight, mChannels;
+    int                  mWidth, mHeight, mChannels;
 
     STBImage();
     STBImage(std::string path);

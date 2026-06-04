@@ -8,19 +8,24 @@
 BoundingVolumeHierarchy::BoundingVolumeHierarchy()
 {
     mPrimitive = NULL;
-    mLeft = NULL;
-    mRight = NULL;
+    mLeft      = NULL;
+    mRight     = NULL;
 }
 
-BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives) : BoundingVolumeHierarchy(primitives, 0, primitives.size()) {}
+BoundingVolumeHierarchy::BoundingVolumeHierarchy(
+    std::vector<std::unique_ptr<object::Primitive>> &primitives)
+    : BoundingVolumeHierarchy(primitives, 0, primitives.size())
+{
+}
 
-BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<object::Primitive>> &primitives, size_t start, size_t end)
+BoundingVolumeHierarchy::BoundingVolumeHierarchy(
+    std::vector<std::unique_ptr<object::Primitive>> &primitives, size_t start, size_t end)
 {
     // See ray tracing in one weekend, their implementation is pretty smart.
     // Just modifying it so it fits how I have the rest of my system set up.
     mPrimitive = NULL;
-    mLeft = NULL;
-    mRight = NULL;
+    mLeft      = NULL;
+    mRight     = NULL;
 
     // Find the longest axis
     mBbox = BoundingBox();
@@ -28,7 +33,7 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<obj
     {
         mBbox.merge(primitives[i]->mBoundingBox);
     }
-    int axis = mBbox.largestAxis();
+    int axis  = mBbox.largestAxis();
     int range = end - start;
 
     // Go down the tree, generating nodes and assigning bounding boxes.
@@ -37,21 +42,21 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<obj
     if (range == 1 && typeid(*primitives[start]) != typeid(object::Camera))
     {
         mPrimitive = primitives[start].get();
-        mBbox = mPrimitive->mBoundingBox;
+        mBbox      = mPrimitive->mBoundingBox;
     }
     else if (range == 2)
     {
         if (typeid(*primitives[start]) != typeid(object::Camera))
         {
-            mLeft = new BoundingVolumeHierarchy();
+            mLeft             = new BoundingVolumeHierarchy();
             mLeft->mPrimitive = primitives[start].get();
-            mLeft->mBbox = mLeft->mPrimitive->mBoundingBox;
+            mLeft->mBbox      = mLeft->mPrimitive->mBoundingBox;
         }
         if (typeid(*primitives[start + 1]) != typeid(object::Camera))
         {
-            mRight = new BoundingVolumeHierarchy();
+            mRight             = new BoundingVolumeHierarchy();
             mRight->mPrimitive = primitives[start + 1].get();
-            mRight->mBbox = mRight->mPrimitive->mBoundingBox;
+            mRight->mBbox      = mRight->mPrimitive->mBoundingBox;
         }
     }
     else
@@ -65,7 +70,7 @@ BoundingVolumeHierarchy::BoundingVolumeHierarchy(std::vector<std::unique_ptr<obj
                                           : BoundingVolumeHierarchy::compare_z;
 
         std::sort(std::begin(primitives) + start, std::begin(primitives) + end, comparator);
-        mLeft = new BoundingVolumeHierarchy(primitives, start, start + range / 2);
+        mLeft  = new BoundingVolumeHierarchy(primitives, start, start + range / 2);
         mRight = new BoundingVolumeHierarchy(primitives, start + range / 2, end);
     }
 }
@@ -75,7 +80,8 @@ BoundingVolumeHierarchy::~BoundingVolumeHierarchy()
     destroySubtree(this);
 }
 
-object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &incoming, Ray &outgoing, double &t, Color &color)
+object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &incoming, Ray &outgoing,
+                                                                 double &t, Color &color)
 {
     // Traverse down any nodes that intersect the ray
     // (regardless of what side of the tree they're on).
@@ -92,24 +98,24 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
     if (mPrimitive)
     {
         // Reached a leaf
-        Ray thisIncoming = Ray(incoming);
-        double thisT = t;
-        Color thisColor = Color(color);
-        collision = mPrimitive->collide(thisIncoming, thisT, thisColor);
+        Ray    thisIncoming = Ray(incoming);
+        double thisT        = t;
+        Color  thisColor    = Color(color);
+        collision           = mPrimitive->collide(thisIncoming, thisT, thisColor);
         if (collision != object::Primitive::Collision::MISSED && thisT < t)
         {
             // We hit something closer than our current mark, so remember it
             outgoing = Ray(thisIncoming);
-            t = thisT;
-            color = Color(thisColor);
+            t        = thisT;
+            color    = Color(thisColor);
             return collision;
         }
         return object::Primitive::Collision::MISSED;
     }
 
     double tLeft, tRight;
-    bool intLeft = mLeft->mBbox.intersectsBox(incoming, tLeft);
-    bool intRight = mRight->mBbox.intersectsBox(incoming, tRight);
+    bool   intLeft  = mLeft->mBbox.intersectsBox(incoming, tLeft);
+    bool   intRight = mRight->mBbox.intersectsBox(incoming, tRight);
 
     // TODO: ignore nodes that are closer than t
     if (intLeft)
@@ -118,15 +124,16 @@ object::Primitive::Collision BoundingVolumeHierarchy::intersects(const Ray &inco
     }
     if (intRight)
     {
-        Ray thisOutgoing = Ray();
-        double thisT = t;
-        Color thisColor = Color(color);
-        object::Primitive::Collision rightCollision = mRight->intersects(incoming, thisOutgoing, thisT, thisColor);
+        Ray                          thisOutgoing = Ray();
+        double                       thisT        = t;
+        Color                        thisColor    = Color(color);
+        object::Primitive::Collision rightCollision =
+            mRight->intersects(incoming, thisOutgoing, thisT, thisColor);
         if (rightCollision != object::Primitive::Collision::MISSED && thisT < t)
         {
-            outgoing = Ray(thisOutgoing);
-            t = thisT;
-            color = Color(thisColor);
+            outgoing  = Ray(thisOutgoing);
+            t         = thisT;
+            color     = Color(thisColor);
             collision = rightCollision;
         }
     }
@@ -145,17 +152,20 @@ void BoundingVolumeHierarchy::destroySubtree(BoundingVolumeHierarchy *subtree)
     }
 }
 
-bool BoundingVolumeHierarchy::compare_x(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b)
+bool BoundingVolumeHierarchy::compare_x(const std::unique_ptr<object::Primitive> &a,
+                                        const std::unique_ptr<object::Primitive> &b)
 {
     return BoundingBox::compare(a->mBoundingBox, b->mBoundingBox, V_X);
 }
 
-bool BoundingVolumeHierarchy::compare_y(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b)
+bool BoundingVolumeHierarchy::compare_y(const std::unique_ptr<object::Primitive> &a,
+                                        const std::unique_ptr<object::Primitive> &b)
 {
     return BoundingBox::compare(a->mBoundingBox, b->mBoundingBox, V_Y);
 }
 
-bool BoundingVolumeHierarchy::compare_z(const std::unique_ptr<object::Primitive> &a, const std::unique_ptr<object::Primitive> &b)
+bool BoundingVolumeHierarchy::compare_z(const std::unique_ptr<object::Primitive> &a,
+                                        const std::unique_ptr<object::Primitive> &b)
 {
     return BoundingBox::compare(a->mBoundingBox, b->mBoundingBox, V_Z);
 }

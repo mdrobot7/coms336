@@ -1,8 +1,8 @@
 #include "vector.hpp"
 #include "common.hpp"
-#include <stdexcept>
 #include <cmath>
 #include <cstdlib>
+#include <stdexcept>
 
 Vector::Vector() {}
 
@@ -143,13 +143,14 @@ bool Vector::closeToZero() const
 
 ModelMatrix::ModelMatrix() {}
 
-ModelMatrix::ModelMatrix(const Vector &origin, const Vector &front, const Vector &top, const Vector &scale)
+ModelMatrix::ModelMatrix(const Vector &origin, const Vector &front, const Vector &top,
+                         const Vector &scale)
 {
     mOrigin = origin;
-    mFront = front;
-    mTop = top;
-    mRight = Vector::scross3(Vector::svscale(mFront, -1.0), mTop);
-    mScale = scale;
+    mFront  = front;
+    mTop    = top;
+    mRight  = Vector::scross3(Vector::svscale(mFront, -1.0), mTop);
+    mScale  = scale;
 }
 
 Vector &ModelMatrix::mul(Vector &vec3) const

@@ -1,17 +1,17 @@
-#include <cstdint>
-#include <cstdlib>
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-#include <thread>
-#include <chrono>
-#include <ctime>
-#include <limits>
 #include "render.hpp"
-#include "vector.hpp"
 #include "bvh.hpp"
 #include "common.hpp"
+#include "vector.hpp"
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <thread>
 
 // Framebuffer indices
 #define R (0)
@@ -19,29 +19,31 @@
 #define B (2)
 
 // Defined in common.hpp
-thread_local std::mt19937 randGen;
+thread_local std::mt19937                     randGen;
 thread_local std::uniform_real_distribution<> randDist;
 
-Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel, int jobs, int maxBounces) : mScene(scene), mBvh(bvh)
+Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height,
+               int antiAliasingLevel, int jobs, int maxBounces)
+    : mScene(scene), mBvh(bvh)
 {
-    mWidth = width;
-    mHeight = height;
+    mWidth             = width;
+    mHeight            = height;
     mAntiAliasingLevel = antiAliasingLevel;
-    mFb = (uint8_t *)malloc(width * height * 3); // 24 bit color, 8 bits per channel
+    mFb                = (uint8_t *)malloc(width * height * 3); // 24 bit color, 8 bits per channel
     if (!mFb)
     {
         throw std::bad_alloc();
     }
 
-    mJobs = jobs;
+    mJobs       = jobs;
     mNextPixelX = mNextPixelY = 0;
-    mKillThreads = false;
+    mKillThreads              = false;
 
     mMaxBounces = maxBounces;
 
     setupImgPlane();
     Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
-    mPinhole = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
+    mPinhole           = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
 }
 
 Render::~Render()
@@ -73,7 +75,7 @@ int Render::run()
         mNextPixelLock.unlock();
 
         // Lovely progress bar
-        const int barWidth = 70;
+        const int    barWidth = 70;
         const double progress = (((double)nextY * mWidth + nextX) / (mWidth * mHeight));
         std::cout << "[";
         int pos = barWidth * progress;
@@ -110,22 +112,19 @@ int Render::save(std::string filename)
 
     // Binary
     out.open(filename + ".ppm", std::ios::out | std::ios::binary);
-    out << "P6\n"
-        << mWidth << " " << mHeight << "\n255\n";
+    out << "P6\n" << mWidth << " " << mHeight << "\n255\n";
     out.write((const char *)mFb, mWidth * mHeight * 3);
     out.close();
 
     // ASCII
     out.open(filename + ".txt.ppm");
-    out << "P3\n"
-        << mWidth << " " << mHeight << "\n255\n";
+    out << "P3\n" << mWidth << " " << mHeight << "\n255\n";
     for (int y = 0; y < mHeight; y++)
     {
         for (int x = 0; x < mWidth; x++)
         {
             // int casts are to persuade CPP into printing these values as integers
-            out << (int)(getPixel(y, x)[R]) << " "
-                << (int)(getPixel(y, x)[G]) << " "
+            out << (int)(getPixel(y, x)[R]) << " " << (int)(getPixel(y, x)[G]) << " "
                 << (int)(getPixel(y, x)[B]) << "\n";
         }
     }
@@ -136,7 +135,7 @@ int Render::save(std::string filename)
 void Render::renderPixel()
 {
     std::random_device rd;
-    randGen = std::mt19937(rd());
+    randGen  = std::mt19937(rd());
     randDist = std::uniform_real_distribution<>(-1.0, 1.0);
     while (!mKillThreads)
     {
@@ -165,15 +164,16 @@ void Render::renderPixel()
             getImgPlanePixelRandomDefocus(nextY, nextX, origin, dir);
             Ray inRay = Ray(origin, dir);
 
-            // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get absorbed.
+            // Trace the ray. Keep tracing until we run out of bounces, miss everything, or we get
+            // absorbed.
             for (int j = 0; j < mMaxBounces; j++)
             {
                 // Check BVH
-                Ray outRay;
-                double t = std::numeric_limits<double>::infinity();
-                Color color;
+                Ray                          outRay;
+                double                       t = std::numeric_limits<double>::infinity();
+                Color                        color;
                 object::Primitive::Collision collision = mBvh.intersects(inRay, outRay, t, color);
-                inRay = Ray(outRay);
+                inRay                                  = Ray(outRay);
 
                 if (color.closeToZero())
                 {
@@ -206,9 +206,9 @@ void Render::renderPixel()
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);
-        pixel[R] = (uint8_t)(pixelColor[R] * 255);
-        pixel[G] = (uint8_t)(pixelColor[G] * 255);
-        pixel[B] = (uint8_t)(pixelColor[B] * 255);
+        pixel[R]       = (uint8_t)(pixelColor[R] * 255);
+        pixel[G]       = (uint8_t)(pixelColor[G] * 255);
+        pixel[B]       = (uint8_t)(pixelColor[B] * 255);
         mFbLock.unlock();
     }
 }
@@ -251,7 +251,7 @@ void Render::setupImgPlane()
     Vector widthNorm = Vector::svnorm(Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
     mPlaneWidth.vscale(widthNorm, aspectRatio / mWidth);
 
-    Vector halfTop = Vector::svscale(mScene.mCamera.mTop, 0.5);
+    Vector halfTop   = Vector::svscale(mScene.mCamera.mTop, 0.5);
     Vector halfWidth = Vector::svscale(widthNorm, 0.5 * aspectRatio);
     mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(halfTop, halfWidth));
 }
@@ -261,12 +261,12 @@ void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector 
     // Find a random point on the lens disk, shoot it through the center of
     // an image plane pixel
     double randomRadius = randomDouble() * mScene.mCamera.mLensDiskDiameter;
-    double randomAngle = randomDouble() * 2.0 * M_PI;
+    double randomAngle  = randomDouble() * 2.0 * M_PI;
 
     // Convert polar to cartesian, scale relative to camera axes, add in camera origin
-    Vector camRight = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).vnorm();
-    Vector randomX = Vector::svscale(camRight, randomRadius * cos(randomAngle));
-    Vector randomY = Vector::svscale(mScene.mCamera.mTop, randomRadius * sin(randomAngle));
+    Vector camRight        = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).vnorm();
+    Vector randomX         = Vector::svscale(camRight, randomRadius * cos(randomAngle));
+    Vector randomY         = Vector::svscale(mScene.mCamera.mTop, randomRadius * sin(randomAngle));
     Vector randomLensPoint = Vector::svadd(mPinhole, Vector::svadd(randomX, randomY));
 
     // Randomize location inside image plane pixel

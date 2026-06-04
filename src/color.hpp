@@ -1,14 +1,14 @@
 #pragma once
+#include "vector.hpp"
 #include <map>
 #include <string>
-#include "vector.hpp"
 
 // Typedef to make the param/return types clear
 // Each color channel is [0, 1) and can be rescaled to any color depth
 
 class Color : public Vector
 {
-public:
+  public:
     using Vector::Vector;
 
     // Explicit conversion constructor, since it's a downcast
@@ -61,6 +61,6 @@ public:
      */
     static Color refract(Color surface, Color incoming);
 
-private:
+  private:
     static const std::map<std::string, enum Surface> sSurfaceMap;
 };

@@ -15,7 +15,8 @@ BoundingBox::BoundingBox()
     }
 }
 
-BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, double minZ, double maxZ)
+BoundingBox::BoundingBox(double minX, double maxX, double minY, double maxY, double minZ,
+                         double maxZ)
 {
     mIntersections[V_X][0] = minX - sPadding;
     mIntersections[V_X][1] = maxX + sPadding;
@@ -34,12 +35,12 @@ bool BoundingBox::intersectsBox(const Ray &r, double &t)
     // max of the minInts and min of the maxInts.
     for (int i = 0; i < 3; i++)
     {
-        double int0 = intersectionTime(r, mIntersections[i][0], i);
-        double int1 = intersectionTime(r, mIntersections[i][1], i);
+        double int0       = intersectionTime(r, mIntersections[i][0], i);
+        double int1       = intersectionTime(r, mIntersections[i][1], i);
         double thisMinInt = MIN(int0, int1);
         double thisMaxInt = MAX(int0, int1);
-        maxMinInt = thisMinInt > maxMinInt ? thisMinInt : maxMinInt;
-        minMaxInt = thisMaxInt < minMaxInt ? thisMaxInt : minMaxInt;
+        maxMinInt         = thisMinInt > maxMinInt ? thisMinInt : maxMinInt;
+        minMaxInt         = thisMaxInt < minMaxInt ? thisMaxInt : minMaxInt;
     }
 
     // Check if the ranges overlap, also ignore boxes that are *fully*

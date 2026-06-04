@@ -1,10 +1,10 @@
 #pragma once
-#include "vector.hpp"
 #include "color.hpp"
+#include "vector.hpp"
 
 class Ray
 {
-public:
+  public:
     Vector mOrigin;
     Vector mDir; // Normalized!
 

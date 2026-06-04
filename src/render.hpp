@@ -1,18 +1,19 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include "scene.hpp"
-#include "ray.hpp"
 #include "bvh.hpp"
+#include "ray.hpp"
+#include "scene.hpp"
+#include <cstdint>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 class Render
 {
-public:
-    Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel, int jobs, int maxBounces);
+  public:
+    Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height, int antiAliasingLevel,
+           int jobs, int maxBounces);
     ~Render();
 
     /**
@@ -32,25 +33,26 @@ public:
      */
     int save(std::string filename);
 
-private:
+  private:
     Scene &mScene;
 
     BoundingVolumeHierarchy &mBvh;
 
-    int mWidth, mHeight, mAntiAliasingLevel;
-    uint8_t *mFb;
+    int        mWidth, mHeight, mAntiAliasingLevel;
+    uint8_t   *mFb;
     std::mutex mFbLock;
 
-    int mJobs;
+    int                      mJobs;
     std::vector<std::thread> mThreads;
-    int mNextPixelX, mNextPixelY;
-    std::mutex mNextPixelLock;
-    bool mKillThreads;
+    int                      mNextPixelX, mNextPixelY;
+    std::mutex               mNextPixelLock;
+    bool                     mKillThreads;
 
     int mMaxBounces; // Max bounces per ray before we call it black
 
-    Vector mPlaneWidth, mPlaneHeight, mPlaneOrigin; // Width/heights are normalized, origin is top left corner
-    Vector mPinhole;                                // Location of the pinhole camera
+    Vector mPlaneWidth, mPlaneHeight,
+        mPlaneOrigin; // Width/heights are normalized, origin is top left corner
+    Vector mPinhole;  // Location of the pinhole camera
 
     /**
      * @brief Job for an individual thread in the thread
