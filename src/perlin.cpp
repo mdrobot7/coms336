@@ -10,7 +10,7 @@ Perlin::Perlin()
     // Generate 4 random blocks: one random vector block
     // and 3 "modifiers" (permutations).
     mVectors = std::vector<Vector>(sNumPoints);
-    std::generate(mVectors.begin(), mVectors.end(), Vector::svrand3);
+    std::generate(mVectors.begin(), mVectors.end(), Vector::rand);
 
     mPermX = std::vector<int>(sNumPoints);
     mPermY = std::vector<int>(sNumPoints);
@@ -23,7 +23,7 @@ Perlin::Perlin()
 double Perlin::get(const Vector &vec)
 {
     // Increase frequency
-    Vector sVec = Vector::svscale(vec, sFrequency);
+    Vector sVec = vec * sFrequency;
 
     // Trilinear interpolation with random vectors
     double u = sVec[V_X] - std::floor(sVec[V_X]);
