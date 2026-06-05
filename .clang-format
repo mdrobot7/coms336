@@ -24,7 +24,12 @@ BinPackArguments: false
 
 SpaceBeforeParens: ControlStatements
 
-AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignCompound: true
+AlignConsecutiveBitFields: Consecutive
 AlignConsecutiveDeclarations: Consecutive
 AlignOperands: Align
 
