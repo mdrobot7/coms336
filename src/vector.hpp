@@ -40,8 +40,9 @@ class Vector
                 return y;
             case 2:
                 return z;
+            default:
+                throw std::invalid_argument("Index out of range.");
         }
-        throw std::invalid_argument("Index out of range.");
     }
 
     constexpr double operator[](size_t index) const
@@ -54,8 +55,9 @@ class Vector
                 return y;
             case 2:
                 return z;
+            default:
+                throw std::invalid_argument("Index out of range.");
         }
-        throw std::invalid_argument("Index out of range.");
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Vector &v)
