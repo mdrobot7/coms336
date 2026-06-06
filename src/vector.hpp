@@ -1,7 +1,10 @@
 #pragma once
 
+#include "common.hpp"
+#include <cmath>
 #include <cstddef>
-#include <vector>
+#include <ostream>
+#include <stdexcept>
 
 #define V_X (0)
 #define V_Y (1)
@@ -10,15 +13,58 @@
 class Vector
 {
   public:
-    double v[3];
+    double x, y, z;
 
-    Vector();
-    Vector(std::vector<double> std_vector);
-    Vector(double double_arr[3]);
-    Vector(double x, double y, double z);
+    constexpr Vector() : x(0), y(0), z(0) {}
+    ~Vector() = default;
+    constexpr Vector(const Vector &copy_from) : x(copy_from.x), y(copy_from.y), z(copy_from.z) {}
+    constexpr Vector(Vector &&move_from) : x(move_from.x), y(move_from.y), z(move_from.z) {}
+    constexpr Vector(double double_arr[3]) : x(double_arr[0]), y(double_arr[1]), z(double_arr[2]) {}
+    constexpr Vector(double x, double y, double z) : x(x), y(y), z(z) {}
 
-    double       &operator[](size_t index);
-    const double &operator[](size_t index) const;
+    constexpr Vector &operator=(const Vector &copy_from)
+    {
+        x = copy_from.x;
+        y = copy_from.y;
+        z = copy_from.z;
+        return *this;
+    }
+
+    constexpr double &operator[](size_t index)
+    {
+        switch (index)
+        {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            default:
+                throw std::invalid_argument("Index out of range.");
+        }
+    }
+
+    constexpr double operator[](size_t index) const
+    {
+        switch (index)
+        {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+            default:
+                throw std::invalid_argument("Index out of range.");
+        }
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Vector &v)
+    {
+        os << "[ " << v.x << ", " << v.y << ", " << v.z << " ]";
+        return os;
+    }
 
     /**
      * NOTE!
@@ -32,16 +78,34 @@ class Vector
     /**
      * @brief 3-dimensional dot product of two vectors
      */
-    double        dot(const Vector &a);
-    static double dot(const Vector &a, const Vector &b);
+    static constexpr double dot(const Vector &a, const Vector &b)
+    {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    constexpr double dot(const Vector &a)
+    {
+        return dot(*this, a);
+    }
 
     /**
      * @brief 3-dimensional cross product of two vectors.
      * Performs this x a.
      */
-    Vector              &cross3(const Vector &a);
-    Vector              &cross3(const Vector &a, const Vector &b);
-    static inline Vector scross3(const Vector &a, const Vector &b)
+    constexpr Vector cross3(const Vector &a, const Vector &b)
+    {
+        x = a.y * b.z - a.z * b.y;
+        y = -1.0 * (a.x * b.z - a.z * b.x);
+        z = a.x * b.y - a.y * b.x;
+        return *this;
+    }
+
+    constexpr Vector cross3(const Vector &a)
+    {
+        return cross3(*this, a);
+    }
+
+    static constexpr Vector scross3(const Vector &a, const Vector &b)
     {
         Vector v;
         return v.cross3(a, b);
@@ -50,80 +114,134 @@ class Vector
     /**
      * @brief 3-dimensional vector add
      */
-    Vector              &vadd(const Vector &a);
-    Vector              &vadd(const Vector &a, const Vector &b);
-    static inline Vector svadd(const Vector &a, const Vector &b)
+    friend constexpr Vector operator+(const Vector &a, const Vector &b)
     {
-        Vector v;
-        return v.vadd(a, b);
+        return Vector(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
+
+    constexpr Vector &operator+=(const Vector &a)
+    {
+        x += a.x;
+        y += a.y;
+        z += a.z;
+        return *this;
     }
 
     /**
      * @brief 3-dimensional vector subtract.
      * Performs this - a.
      */
-    Vector              &vsub(const Vector &a);
-    Vector              &vsub(const Vector &a, const Vector &b);
-    static inline Vector svsub(const Vector &a, const Vector &b)
+    friend constexpr Vector operator-(const Vector &a, const Vector &b)
     {
-        Vector v;
-        return v.vsub(a, b);
+        return Vector(a.x - b.x, a.y - b.y, a.z - b.z);
+    }
+
+    constexpr Vector &operator-=(const Vector &a)
+    {
+        x -= a.x;
+        y -= a.y;
+        z -= a.z;
+        return *this;
     }
 
     /**
      * @brief 3-dimensional vector multiply with a scalar
      */
-    Vector              &vscale(double scalar);
-    Vector              &vscale(const Vector &a, double scalar);
-    static inline Vector svscale(const Vector &a, double scalar)
+    friend constexpr Vector operator*(const Vector &a, const double scale)
     {
-        Vector v;
-        return v.vscale(a, scalar);
+        return Vector(a.x * scale, a.y * scale, a.z * scale);
+    }
+
+    friend constexpr Vector operator*(const double scale, const Vector &a)
+    {
+        return Vector(a.x * scale, a.y * scale, a.z * scale);
+    }
+
+    constexpr Vector &operator*=(const double scale)
+    {
+        x *= scale;
+        y *= scale;
+        z *= scale;
+        return *this;
+    }
+
+    constexpr Vector operator-()
+    {
+        return *this * -1.0;
+    }
+
+    /**
+     * @brief 3-dimensional vector length.
+     */
+    constexpr double length() const
+    {
+        return std::sqrt(x * x + y * y + z * z);
     }
 
     /**
      * @brief 3-dimensional vector norm. Attempting to normalize
      * the 0 vector returns the 0 vector.
      */
-    Vector              &vnorm();
-    Vector              &vnorm(const Vector &a);
-    static inline Vector svnorm(const Vector &a)
+    constexpr Vector &norm()
     {
-        Vector v;
-        return v.vnorm(a);
+        if (this->length() == 0.0)
+        {
+            x = y = z = 0;
+        }
+        else
+        {
+            double len  = length();
+            x          /= len;
+            y          /= len;
+            z          /= len;
+        }
+        return *this;
+    }
+
+    static constexpr Vector snorm(const Vector &a)
+    {
+        if (a.length() == 0.0)
+        {
+            return Vector(0, 0, 0);
+        }
+        else
+        {
+            return a * (1.0 / a.length());
+        }
     }
 
     /**
      * @brief Clamp all elements of a vector in the range [0, clip]
      * (inclusive).
      */
-    Vector              &vclip(double clip);
-    Vector              &vclip(const Vector &a, double clip);
-    static inline Vector svclip(const Vector &a, double clip)
+    constexpr Vector &clip(double max)
     {
-        Vector v;
-        return v.vclip(a, clip);
+        x = CLAMP(x, 0, max);
+        y = CLAMP(y, 0, max);
+        z = CLAMP(z, 0, max);
+        return *this;
     }
 
     /**
      * @brief Return a random normalized 3-dimensional vector.
      * Uses thread-safe C++ random number generation.
      */
-    Vector              &vrand3();
-    static inline Vector svrand3()
+    static inline Vector rand()
     {
         Vector v;
-        return v.vrand3();
+        v.x = randDist(randGen);
+        v.y = randDist(randGen);
+        v.z = randDist(randGen);
+        return v.norm();
     }
 
     /**
      * @brief Returns true if all three of a vector's dimensions
      * are close to 0. False otherwise.
      */
-    bool               closeToZero() const;
-    static inline bool closeToZero(const Vector &a)
+    constexpr bool closeToZero()
     {
-        return a.closeToZero();
+        return CLOSE_TO(x, 0.0) && CLOSE_TO(y, 0.0) && CLOSE_TO(z, 0.0);
     }
 };
 
@@ -136,8 +254,13 @@ class ModelMatrix
     Vector mRight; // Model's +X axis
     Vector mScale;
 
-    ModelMatrix();
-    ModelMatrix(const Vector &origin, const Vector &front, const Vector &top, const Vector &scale);
+    constexpr ModelMatrix() {}
+    constexpr ModelMatrix(const Vector &origin, const Vector &front, const Vector &top,
+                          const Vector &scale)
+        : mOrigin(origin), mFront(front), mTop(top), mRight(), mScale(scale)
+    {
+        mRight = Vector::scross3(-mFront, mTop);
+    }
 
     /**
      * @brief Turn a 3-vector into a homogeneous 4-vector,
@@ -146,5 +269,37 @@ class ModelMatrix
      *
      * Modifies vec3 and returns a reference to vec3.
      */
-    Vector &mul(Vector &vec3) const;
+    constexpr Vector &mul(Vector &vec3) const
+    {
+        /*
+            Essentially this amounts to a change of basis,
+            translation, and scale. Doing it with discrete operations
+            instead of a single homogeneous matrix because
+            it's easier to write and performance is probably
+            close enough.
+
+            Little hack  for change of basis because top and
+            front are guaranteed to be orthogonal:
+            V_i = (V dot b_i) / |b_i|^2
+        */
+        Vector temp;
+
+        // Handle rotation with change of basis
+        temp.x = Vector::dot(vec3, mRight) / Vector::dot(mRight, mRight);
+        temp.y = Vector::dot(vec3, mTop) / Vector::dot(mTop, mTop);
+        temp.z = Vector::dot(vec3, mFront) / Vector::dot(mFront, mFront);
+
+        // Handle scale
+        temp.x *= mScale.x;
+        temp.y *= mScale.y;
+        temp.z *= mScale.z;
+
+        // Handle translation
+        temp.x += mOrigin.x;
+        temp.y += mOrigin.y;
+        temp.z += mOrigin.z;
+
+        vec3 = temp;
+        return vec3;
+    }
 };

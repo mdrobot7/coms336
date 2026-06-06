@@ -42,8 +42,8 @@ Render::Render(Scene &scene, BoundingVolumeHierarchy &bvh, int width, int height
     mMaxBounces = maxBounces;
 
     setupImgPlane();
-    Vector focalLength = Vector::svscale(mScene.mCamera.mFront, mScene.mCamera.mFocalLength);
-    mPinhole           = Vector::svsub(mScene.mCamera.mOrigin, focalLength);
+    Vector focalLength = mScene.mCamera.mFront * mScene.mCamera.mFocalLength;
+    mPinhole           = mScene.mCamera.mOrigin - focalLength;
 }
 
 Render::~Render()
@@ -173,7 +173,7 @@ void Render::renderPixel()
                 double                       t = std::numeric_limits<double>::infinity();
                 Color                        color;
                 object::Primitive::Collision collision = mBvh.intersects(inRay, outRay, t, color);
-                inRay                                  = Ray(outRay);
+                inRay                                  = std::move(outRay);
 
                 if (color.closeToZero())
                 {
@@ -190,7 +190,7 @@ void Render::renderPixel()
                 {
                     // Ray was absorbed, we've found its final color
                     inRay.addCollision(color);
-                    pixelColor.vadd(inRay.mColor);
+                    pixelColor += inRay.mColor;
                     break;
                 }
                 else if (collision == object::Primitive::Collision::MISSED)
@@ -201,8 +201,8 @@ void Render::renderPixel()
                 }
             }
         }
-        pixelColor.vscale(1.0 / mAntiAliasingLevel); // Average our ray colors
-        pixelColor.vclip(1.0);
+        pixelColor *= 1.0 / mAntiAliasingLevel; // Average our ray colors
+        pixelColor.clip(1.0);
 
         mFbLock.lock();
         uint8_t *pixel = getPixel(nextY, nextX);
@@ -247,13 +247,13 @@ void Render::setupImgPlane()
 
     double aspectRatio = (double)mWidth / mHeight;
 
-    mPlaneHeight.vscale(mScene.mCamera.mTop, -1.0 / mHeight);
-    Vector widthNorm = Vector::svnorm(Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop));
-    mPlaneWidth.vscale(widthNorm, aspectRatio / mWidth);
+    mPlaneHeight     = mScene.mCamera.mTop * (-1.0 / mHeight);
+    Vector widthNorm = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();
+    mPlaneWidth      = widthNorm * (aspectRatio / mWidth);
 
-    Vector halfTop   = Vector::svscale(mScene.mCamera.mTop, 0.5);
-    Vector halfWidth = Vector::svscale(widthNorm, 0.5 * aspectRatio);
-    mPlaneOrigin.vadd(mScene.mCamera.mOrigin, Vector::svsub(halfTop, halfWidth));
+    Vector halfTop   = mScene.mCamera.mTop * 0.5;
+    Vector halfWidth = widthNorm * (0.5 * aspectRatio);
+    mPlaneOrigin     = mScene.mCamera.mOrigin + (halfTop - halfWidth);
 }
 
 void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector &dir)
@@ -264,18 +264,17 @@ void Render::getImgPlanePixelRandomDefocus(int y, int x, Vector &origin, Vector 
     double randomAngle  = randomDouble() * 2.0 * M_PI;
 
     // Convert polar to cartesian, scale relative to camera axes, add in camera origin
-    Vector camRight        = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).vnorm();
-    Vector randomX         = Vector::svscale(camRight, randomRadius * cos(randomAngle));
-    Vector randomY         = Vector::svscale(mScene.mCamera.mTop, randomRadius * sin(randomAngle));
-    Vector randomLensPoint = Vector::svadd(mPinhole, Vector::svadd(randomX, randomY));
+    Vector camRight        = Vector::scross3(mScene.mCamera.mFront, mScene.mCamera.mTop).norm();
+    Vector randomX         = camRight * (randomRadius * cos(randomAngle));
+    Vector randomY         = mScene.mCamera.mTop * (randomRadius * sin(randomAngle));
+    Vector randomLensPoint = mPinhole + randomX + randomY;
 
     // Randomize location inside image plane pixel
-    Vector dx = Vector::svscale(mPlaneWidth, x + randomDouble());
-    Vector dy = Vector::svscale(mPlaneHeight, y + randomDouble());
+    Vector dx = mPlaneWidth * (x + randomDouble());
+    Vector dy = mPlaneHeight * (y + randomDouble());
 
     // Find vector to image plane pixel, then find vector between lens and
     // image plane pixel
-    origin = Vector::svadd(mPlaneOrigin, dy);
-    origin.vadd(dx);
-    dir.vsub(origin, randomLensPoint).vnorm();
+    origin = mPlaneOrigin + dy + dx;
+    dir    = (origin - randomLensPoint).norm();
 }

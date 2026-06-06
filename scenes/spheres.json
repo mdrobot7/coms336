@@ -1,0 +1,200 @@
+{
+    "_comment": "A large emissive blue 2000x2000 skybox, a diffuse green ground, and three spheres: one diffuse, one specular, and one dielectric.",
+    "camera": {
+        "_comment": "Camera is straight up and down pointing into the page.",
+        "origin": {
+            "x": 0,
+            "y": 50,
+            "z": -0.5
+        },
+        "front": {
+            "x": 0,
+            "y": 0,
+            "z": -1
+        },
+        "top": {
+            "x": 0,
+            "y": 1,
+            "z": 0
+        },
+        "focalLength": 0.5,
+        "emissiveGain": 1,
+        "defocusAngle": 0
+    },
+    "objects": [
+        {
+            "_comment": "floor",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 0,
+                "z": 0
+            },
+            "width": {
+                "x": 2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 0,
+                "z": -2000
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "left wall",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 0,
+                "z": 0
+            },
+            "width": {
+                "x": 0,
+                "y": 0,
+                "z": -2000
+            },
+            "height": {
+                "x": 0,
+                "y": 2000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "back wall",
+            "type": "quad",
+            "origin": {
+                "x": -1000,
+                "y": 0,
+                "z": -2000
+            },
+            "width": {
+                "x": 2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 2000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "right wall",
+            "type": "quad",
+            "origin": {
+                "x": 1000,
+                "y": 0,
+                "z": -2000
+            },
+            "width": {
+                "x": 0,
+                "y": 0,
+                "z": 2000
+            },
+            "height": {
+                "x": 0,
+                "y": 2000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "ceiling",
+            "type": "quad",
+            "origin": {
+                "x": 1000,
+                "y": 2000,
+                "z": 0
+            },
+            "width": {
+                "x": -2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 0,
+                "z": -2000
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "front",
+            "type": "quad",
+            "origin": {
+                "x": 1000,
+                "y": 0,
+                "z": 0
+            },
+            "width": {
+                "x": -2000,
+                "y": 0,
+                "z": 0
+            },
+            "height": {
+                "x": 0,
+                "y": 2000,
+                "z": 0
+            },
+            "surface": "emissive",
+            "texture": "0x87CEEB",
+            "perlin": false
+        },
+        {
+            "_comment": "Green grass",
+            "type": "sphere",
+            "x": 0,
+            "y": -960,
+            "z": -100,
+            "radius": 1000,
+            "surface": "diffuse",
+            "texture": "0x7CFC00",
+            "perlin": false
+        },
+        {
+            "type": "sphere",
+            "x": -22,
+            "y": 50,
+            "z": -30,
+            "radius": 10,
+            "surface": "dielectric",
+            "texture": "0xFFFFFF",
+            "indexOfRefraction": 0.751,
+            "perlin": false
+        },
+        {
+            "type": "sphere",
+            "x": 0,
+            "y": 50,
+            "z": -30,
+            "radius": 10,
+            "surface": "diffuse",
+            "texture": "0x808080",
+            "perlin": false
+        },
+        {
+            "type": "sphere",
+            "x": 22,
+            "y": 50,
+            "z": -30,
+            "radius": 10,
+            "surface": "specular",
+            "texture": "0x000000",
+            "perlin": false
+        }
+    ]
+}
