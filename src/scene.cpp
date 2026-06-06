@@ -113,9 +113,8 @@ bool Primitive::dielectric(Ray &incoming, const Vector &intersection, const Vect
     Vector rOutPerp     = (incoming.mDir + (normal * cosTheta)) * refractionIndex;
     Vector rOutParallel = normal * -sqrt(std::abs(1.0 - Vector::dot(rOutPerp, rOutPerp)));
 
-    incoming.mDir               = (rOutPerp + rOutParallel).norm();
-    incoming.mOrigin            = intersection;
-    incoming.mIndexOfRefraction = indexOfRefraction;
+    incoming.mDir    = (rOutPerp + rOutParallel).norm();
+    incoming.mOrigin = intersection + 0.001 * incoming.mDir; // Make sure we're outside/inside
 
     return true;
 }
