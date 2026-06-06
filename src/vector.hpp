@@ -190,7 +190,10 @@ class Vector
         }
         else
         {
-            *this *= 1.0 / this->length();
+            double len  = length();
+            x          /= len;
+            y          /= len;
+            z          /= len;
         }
         return *this;
     }
